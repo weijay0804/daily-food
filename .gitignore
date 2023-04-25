@@ -222,6 +222,9 @@ pyrightconfig.json
 # Built Visual Studio Code Extensions
 *.vsix
 
+# SQLite File
+*.db
+
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
