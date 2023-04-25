@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-04-25 23:55:44
+LastEditTime: 2023-04-26 01:24:46
 Description: Api Router 單元測試
 '''
 
@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from app.config import config
 from app import create_app
-from app.model import Restaurant
+from app.database.model import Restaurant
 from app.routers import register_router
 from tests.utils import FakeDataBase
 from app.routers.restaurant_router import get_db

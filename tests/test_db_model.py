@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-25 18:21:17
+LastEditTime: 2023-04-26 01:24:40
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -13,8 +13,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.schemas import restaurant_scheme
-from app.model import Restaurant, Base
-from app import crud
+from app.database.model import Restaurant, Base
+from app.database import crud
 
 
 class InitialDataBaseTest(unittest.TestCase):

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-04-25 23:26:14
+LastEditTime: 2023-04-26 01:23:52
 Description: 餐廳路由
 '''
 
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas.restaurant_scheme import ResReadModel, ResCreateModel, ResModel
 from app.database import SessionLocal
-from app import crud
+from app.database import crud
 
 router = APIRouter(prefix="/restaurant")
 
