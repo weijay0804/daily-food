@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-25 16:07:03
+LastEditTime: 2023-04-25 17:05:20
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -34,6 +34,7 @@ class InitialDataBaseTest(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.engine.clear_compiled_cache()
         cls.engine.dispose()
+        Base.metadata.drop_all(bind=cls.engine)
 
 
 class TestRestaurantModel(InitialDataBaseTest):
