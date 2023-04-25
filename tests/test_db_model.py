@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-25 17:05:20
+LastEditTime: 2023-04-25 18:21:17
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -143,8 +143,6 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.db.commit()
 
     def tearDown(self) -> None:
-        self.db.delete(self.fake_restaurant)
-        self.db.commit()
         self.db.close()
 
     def test_get_restaurants_function(self):
