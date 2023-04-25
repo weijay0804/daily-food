@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-04-25 16:07:05
+LastEditTime: 2023-04-26 01:23:56
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -10,7 +10,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app import model
+from app.database import model
 from app.schemas import restaurant_scheme
 
 
