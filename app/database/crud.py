@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:23:56
+LastEditTime: 2023-04-27 00:51:50
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -32,8 +32,8 @@ def create_restaurant(db: Session, restaurant: restaurant_scheme.ResCreateModel)
     db_restaurant = model.Restaurant(
         name=restaurant.name,
         address=restaurant.address,
-        lat=23.0001,
-        lng=120.222,
+        lat=restaurant.lat,
+        lng=restaurant.lng,
         phone=restaurant.phone,
     )
 
