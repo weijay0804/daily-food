@@ -7,9 +7,11 @@ Description: 放一些輔助通用的函示
 """
 
 
+import os
 from typing import Tuple
 import math
 
+from dotenv import load_dotenv
 from requests.exceptions import ReadTimeout
 import requests
 
@@ -67,11 +69,17 @@ class MapApi:
 
     BASE_URL = "https://www.mapquestapi.com/geocoding/v1"
 
-    # TODO 這邊 key 不要使用參數傳入，而是直接讀取環境變數
     def __init__(self):
         # 檢查是不是第一個實例化的
         if not hasattr(MapApi, "_first_init"):
-            self.api_key = "test_api"
+            # 取得 api key
+            load_dotenv()
+            map_api_key = os.environ.get("MAP_API_KEY")
+
+            if not map_api_key:
+                raise Exception("Can't load 'MAP_API_KEY' from .env file.")
+
+            self.api_key = map_api_key
 
             MapApi._first_init = True
 
