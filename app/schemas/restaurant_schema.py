@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 17:08:09
 LastEditors: weijay
-LastEditTime: 2023-04-27 00:10:41
+LastEditTime: 2023-04-27 01:24:05
 Description: 定義 restaurant router 的數據模型
 '''
 
@@ -17,8 +17,6 @@ class ResBase(BaseModel):
 
     name: str
     address: str
-    lat: float
-    lng: float
     phone: Union[str, None] = None
 
 
@@ -38,6 +36,13 @@ class ResCreateModel(ResBase):
     """新增餐廳時的資料架構"""
 
     pass
+
+
+class ResFullCreateModel(ResBase):
+    """新增餐廳到資料庫中的架構，就是多了 lat 和 lng 資料"""
+
+    lat: float
+    lng: float
 
 
 class ResReadModel(BaseModel):

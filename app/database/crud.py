@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:01:30
+LastEditTime: 2023-04-27 01:33:35
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -26,7 +26,7 @@ def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     return db.query(model.Restaurant).offset(skip).limit(limit).all()
 
 
-def create_restaurant(db: Session, restaurant: restaurant_schema.ResCreateModel):
+def create_restaurant(db: Session, restaurant: restaurant_schema.ResFullCreateModel):
     """建立餐廳資料"""
 
     db_restaurant = model.Restaurant(
@@ -45,7 +45,7 @@ def create_restaurant(db: Session, restaurant: restaurant_schema.ResCreateModel)
 
 
 def update_restaurant(
-    db: Session, restaurant_id: int, updated_data: restaurant_schema.ResCreateModel
+    db: Session, restaurant_id: int, updated_data: restaurant_schema.ResFullCreateModel
 ):
     """更新餐廳資料，如果資料庫中找不到傳進來的 `restaurant_id` 資料，則回傳 `None`"""
 

@@ -2,14 +2,14 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:04:32
+LastEditTime: 2023-04-27 01:32:28
 Description: 餐廳路由
 '''
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel
+from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel, ResFullCreateModel
 from app.database import SessionLocal
 from app.database import crud
 
@@ -39,7 +39,10 @@ def read_restaurants(db: Session = Depends(get_db)):
 def create_restaurant(items: ResCreateModel, db: Session = Depends(get_db)):
     """新增餐廳"""
 
-    crud.create_restaurant(db, items)
+    # TODO 之後要去 call api 取得正確的經緯度
+    full_item = ResFullCreateModel(**items.dict(), lat=23.0001, lng=120.3323)
+
+    crud.create_restaurant(db, full_item)
 
     return {"message": "created."}
 
