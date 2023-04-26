@@ -2,10 +2,11 @@
 Author: weijay
 Date: 2023-04-26 01:40:39
 LastEditors: weijay
-LastEditTime: 2023-04-26 20:42:27
+LastEditTime: 2023-04-26 23:51:19
 Description: app.utils 單元測試
 '''
 
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -50,6 +51,7 @@ class TestLatLng(unittest.TestCase):
 
 class TestMapApi(unittest.TestCase):
     def setUp(self) -> None:
+        os.environ.setdefault("MAP_API_KEY", "test_api_key")
         self.map_api = MapApi()
 
     def test_get_coords_with_vaild_address(self):
