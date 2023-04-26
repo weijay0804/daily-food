@@ -2,14 +2,14 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:23:52
+LastEditTime: 2023-04-27 01:04:32
 Description: 餐廳路由
 '''
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas.restaurant_scheme import ResReadModel, ResCreateModel, ResModel
+from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel
 from app.database import SessionLocal
 from app.database import crud
 
