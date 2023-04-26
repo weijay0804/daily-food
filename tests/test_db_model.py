@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:01:50
+LastEditTime: 2023-04-27 01:27:52
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -152,7 +152,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertTrue(isinstance(restaurants[0], Restaurant))
 
     def test_create_restaurant_function(self):
-        restaurant = restaurant_schema.ResCreateModel(
+        restaurant = restaurant_schema.ResFullCreateModel(
             name="測試2", address="新北市汐止區大同路一段", lat=23.00102, lng=120.00123, phone="02-12334553"
         )
 
@@ -165,7 +165,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def test_update_restaurant_function(self):
         restaurant = self.db.query(Restaurant).filter(Restaurant.name == "測試2").first()
 
-        update_data = restaurant_schema.ResCreateModel(
+        update_data = restaurant_schema.ResFullCreateModel(
             name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
         )
 
@@ -177,7 +177,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(updated_restaurant.phone, "02-12334553")
 
     def test_update_restaurant_function_with_not_exist_id(self):
-        update_data = restaurant_schema.ResCreateModel(
+        update_data = restaurant_schema.ResFullCreateModel(
             name="not exist", address="not exist", lat=23.001, lng=120.321
         )
 
