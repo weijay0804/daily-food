@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:24:40
+LastEditTime: 2023-04-27 00:15:20
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -153,7 +153,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
 
     def test_create_restaurant_function(self):
         restaurant = restaurant_scheme.ResCreateModel(
-            name="測試2", address="新北市汐止區大同路一段", phone="02-12334553"
+            name="測試2", address="新北市汐止區大同路一段", lat=23.00102, lng=120.00123, phone="02-12334553"
         )
 
         db_restaurant = crud.create_restaurant(self.db, restaurant)
@@ -165,7 +165,9 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def test_update_restaurant_function(self):
         restaurant = self.db.query(Restaurant).filter(Restaurant.name == "測試2").first()
 
-        update_data = restaurant_scheme.ResCreateModel(name="測試2更新", address=restaurant.address)
+        update_data = restaurant_scheme.ResCreateModel(
+            name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
+        )
 
         updated_restaurant = crud.update_restaurant(self.db, restaurant.id, update_data)
 
@@ -175,7 +177,9 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(updated_restaurant.phone, "02-12334553")
 
     def test_update_restaurant_function_with_not_exist_id(self):
-        update_data = restaurant_scheme.ResCreateModel(name="not exist", address="not exist")
+        update_data = restaurant_scheme.ResCreateModel(
+            name="not exist", address="not exist", lat=23.001, lng=120.321
+        )
 
         upadted_restaurant = crud.update_restaurant(self.db, 1000, update_data)
 

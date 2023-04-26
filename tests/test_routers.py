@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:24:46
+LastEditTime: 2023-04-27 00:17:03
 Description: Api Router 單元測試
 '''
 
@@ -63,7 +63,8 @@ class TestResaurantRotuer(InitialTestClient):
 
     def test_create_restaurant_router(self):
         response = self.client.post(
-            "/api/v1/restaurant", json={"name": "測試餐廳2", "address": "測試地址2"}
+            "/api/v1/restaurant",
+            json={"name": "測試餐廳2", "address": "測試地址2", "lat": 23.01, "lng": 120.32},
         )
 
         self.assertEqual(response.status_code, 201)
@@ -75,7 +76,12 @@ class TestResaurantRotuer(InitialTestClient):
 
         response = self.client.patch(
             f"/api/v1/restaurant/{restaurant.id}",
-            json={"name": "測試餐廳更新", "address": restaurant.address},
+            json={
+                "name": "測試餐廳更新",
+                "address": restaurant.address,
+                "lat": restaurant.lat,
+                "lng": restaurant.lng,
+            },
         )
 
         self.assertEqual(response.status_code, 200)
