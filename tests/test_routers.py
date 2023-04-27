@@ -2,13 +2,14 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-04-27 16:22:09
+LastEditTime: 2023-04-27 18:29:02
 Description: Api Router 單元測試
 '''
 
 
 import os
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -73,7 +74,9 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertIsNotNone(data[0]["name"])
         self.assertIsNotNone(data[0]["address"])
 
-    def test_create_restaurant_router(self):
+    # 使用 測試方法層面 mock 直接替換掉 get_coords()
+    @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))
+    def test_create_restaurant_router(self, mock_get_coords):
         fake_data = FakeData.fake_restaurant(is_lat_lng=False)
         response = self.client.post(
             "/api/v1/restaurant",
