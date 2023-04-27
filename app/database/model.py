@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:21:10
+LastEditTime: 2023-04-28 00:09:11
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -21,7 +21,7 @@ class Restaurant(Base):
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=False)
     phone = Column(String(20), server_default=None)
-    lat = Column(Float, nullable=False, index=True)
+    lat = Column(Float, nullable=False)
     lng = Column(Float, nullable=False)
     is_enable = Column(Boolean, default=True)
     create_at = Column(DateTime, default=datetime.utcnow)
