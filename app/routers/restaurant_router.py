@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:32:28
+LastEditTime: 2023-04-27 18:30:23
 Description: 餐廳路由
 '''
 
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel, ResFullCreateModel
 from app.database import SessionLocal
 from app.database import crud
+from app.utils import MapApi
 
 router = APIRouter(prefix="/restaurant")
 
@@ -39,8 +40,16 @@ def read_restaurants(db: Session = Depends(get_db)):
 def create_restaurant(items: ResCreateModel, db: Session = Depends(get_db)):
     """新增餐廳"""
 
-    # TODO 之後要去 call api 取得正確的經緯度
-    full_item = ResFullCreateModel(**items.dict(), lat=23.0001, lng=120.3323)
+    # 使用第三方 Api 取得經緯度
+    lat, lng = MapApi().get_coords(items.address)
+
+    full_item = ResFullCreateModel(**items.dict(), lat=lat, lng=lng)
+
+    if not (lat and lng):
+        raise HTTPException(
+            status_code=400,
+            detail=f"The address '{items.address}' format is incorrect and cannot be processed correctly",
+        )
 
     crud.create_restaurant(db, full_item)
 
