@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:27:52
+LastEditTime: 2023-04-27 17:18:08
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker
 from app.schemas import restaurant_schema
 from app.database.model import Restaurant, Base
 from app.database import crud
+from tests.utils import FakeData
 
 
 class InitialDataBaseTest(unittest.TestCase):
@@ -128,19 +129,24 @@ class TestRestaurantModel(InitialDataBaseTest):
 
 
 class TestRestaurantCURD(InitialDataBaseTest):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        fake_data = []
+
+        for _ in range(2):
+            data = FakeData.fake_restaurant()
+            fake_data.append(Restaurant(**data))
+
+        db = cls.SessionLocal()
+
+        db.add_all(fake_data)
+        db.commit()
+        db.close()
+
     def setUp(self) -> None:
         self.db = self.SessionLocal()
-
-        self.fake_restaurant = Restaurant(
-            name="測試1",
-            address="台北市信義區松壽路6段",
-            lat=25.03586,
-            lng=121.56433,
-            phone="02-1284193212",
-        )
-
-        self.db.add(self.fake_restaurant)
-        self.db.commit()
 
     def tearDown(self) -> None:
         self.db.close()
@@ -152,18 +158,18 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertTrue(isinstance(restaurants[0], Restaurant))
 
     def test_create_restaurant_function(self):
-        restaurant = restaurant_schema.ResFullCreateModel(
-            name="測試2", address="新北市汐止區大同路一段", lat=23.00102, lng=120.00123, phone="02-12334553"
-        )
+        fake_data = FakeData.fake_restaurant()
+
+        restaurant = restaurant_schema.ResFullCreateModel(**fake_data, phone="0932212849")
 
         db_restaurant = crud.create_restaurant(self.db, restaurant)
 
         self.assertIsNotNone(db_restaurant)
         self.assertTrue(isinstance(db_restaurant, Restaurant))
-        self.assertEqual(db_restaurant.name, "測試2")
+        self.assertEqual(db_restaurant.name, fake_data["name"])
 
     def test_update_restaurant_function(self):
-        restaurant = self.db.query(Restaurant).filter(Restaurant.name == "測試2").first()
+        restaurant = self.db.query(Restaurant).filter(Restaurant.id == 1).first()
 
         update_data = restaurant_schema.ResFullCreateModel(
             name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
@@ -173,8 +179,8 @@ class TestRestaurantCURD(InitialDataBaseTest):
 
         self.assertIsNotNone(updated_restaurant)
         self.assertEqual(updated_restaurant.name, "測試2更新")
-        self.assertEqual(updated_restaurant.address, "新北市汐止區大同路一段")
-        self.assertEqual(updated_restaurant.phone, "02-12334553")
+        self.assertEqual(updated_restaurant.address, restaurant.address)
+        self.assertEqual(updated_restaurant.phone, restaurant.phone)
 
     def test_update_restaurant_function_with_not_exist_id(self):
         update_data = restaurant_schema.ResFullCreateModel(
@@ -186,7 +192,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertIsNone(upadted_restaurant)
 
     def test_delete_restaurant_function(self):
-        restaurant = self.db.query(Restaurant).filter(Restaurant.name == "測試1").first()
+        restaurant = self.db.query(Restaurant).filter(Restaurant.id == 2).first()
 
         crud.delete_restaurant(self.db, restaurant.id)
 
