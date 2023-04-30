@@ -2,11 +2,13 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-04-27 18:30:23
+LastEditTime: 2023-05-01 00:16:28
 Description: 餐廳路由
 '''
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Union
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel, ResFullCreateModel
@@ -84,3 +86,18 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
         )
 
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
+
+
+@router.get("/choice", response_model=ResReadModel)
+def read_restaurant_randomly(
+    lat: float = Query(default=..., description="所在位置的緯度值"),
+    lng: float = Query(default=..., description="所在位置的經度值"),
+    distance: float = Query(default=..., description="要查詢多少距離範圍內 (km)"),
+    limit: Union[int, None] = Query(default=1, ge=1, le=10, description="一次回傳的最大的餐廳數量"),
+    db: Session = Depends(get_db),
+):
+    """隨機取得範圍內的餐廳ㄧ"""
+
+    random_restaurants = crud.get_restaurant_randomly(db, lat, lng, distance, limit)
+
+    return ResReadModel(items=random_restaurants)
