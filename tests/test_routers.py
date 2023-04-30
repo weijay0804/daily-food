@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-04-27 18:29:02
+LastEditTime: 2023-04-30 23:57:09
 Description: Api Router 單元測試
 '''
 
@@ -113,3 +113,39 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(deleted_restaurant)
+
+    def test_read_retaurant_randomly_router(self):
+        innert_restaurant1 = Restaurant(
+            name="範圍內餐廳", address="test address", lat=23.13219, lng=120.25571
+        )
+
+        innert_restaurant2 = Restaurant(
+            name="範圍內餐廳2", address="test address", lat=23.13116, lng=120.25620
+        )
+
+        outer_restaruant = Restaurant(
+            name="範圍外餐廳", address="test address", lat=23.28754, lng=121.42666
+        )
+
+        with self.fake_database.get_db() as db:
+            db.add_all([innert_restaurant1, innert_restaurant2, outer_restaruant])
+
+            db.commit()
+
+        lat, lng = 23.13125, 120.25678
+        distance = 0.5
+
+        response = self.client.get(
+            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['items'][0]["name"] in ("範圍內餐廳", "範圍內餐廳2"))
+        self.assertEqual(len(response.json()['items']), 1)
+
+        response = self.client.get(
+            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=2"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['items']), 2)
