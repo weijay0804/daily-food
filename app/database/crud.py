@@ -2,12 +2,13 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:33:35
+LastEditTime: 2023-04-30 17:39:22
 Description: 對資料庫進行 CRUD 操作
 '''
 
 from datetime import datetime
 
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app.database import model
@@ -78,3 +79,40 @@ def delete_restaurant(db: Session, restaurant_id: int):
     db.commit()
 
     return restaurant
+
+
+def get_restaurant_randomly(db: Session, lat: float, lng: float, distance: float, limit: int):
+    """隨機取得距離內的餐廳
+
+    Args:
+        db (Session): sessionmaker 實例
+        lat (float): 所在位置緯度
+        lng (float): 所在位置經度
+        distance (float): 多少距離範圍內 (km)
+        limit (int): 回傳的餐廳數量
+    """
+
+    # 這邊使用原生 SQL 指令來查詢
+    # 使用 Haversine formula
+    sql_text = """
+    (
+        6371 * 2 * ASIN(
+            SQRT(
+                POWER(SIN((%f - ABS(lat)) * PI() / 180 / 2), 2)
+                + COS(%f * PI() / 180)
+                * COS(ABS(lat) * PI() / 180)
+                * POWER(SIN((%f - lng) * PI() / 180 / 2), 2)
+            )
+        )
+    ) <= %f
+    """
+
+    items = (
+        db.query(model.Restaurant)
+        .filter(text(sql_text % (lat, lat, lng, distance)))
+        .order_by(func.random())
+        .limit(limit)
+        .all()
+    )
+
+    return items
