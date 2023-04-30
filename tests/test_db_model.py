@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-04-27 17:18:08
+LastEditTime: 2023-04-30 18:18:13
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -207,3 +207,21 @@ class TestRestaurantCURD(InitialDataBaseTest):
         deleted_restaurant = crud.delete_restaurant(self.db, 1000)
 
         self.assertIsNone(deleted_restaurant)
+
+    def test_get_restaurant_randomly_function(self):
+        inner_restaurant = Restaurant(
+            name="範圍內餐廳", address="test address", lat=23.15668, lng=120.39037
+        )
+
+        outer_restaurant = Restaurant(
+            name="範圍外餐廳", address="test address", lat=25.01681, lng=121.29261
+        )
+
+        self.db.add_all([inner_restaurant, outer_restaurant])
+        self.db.commit()
+
+        random_restaurant = crud.get_restaurant_randomly(self.db, 23.15703, 120.390386, 0.2, 1)
+
+        self.assertIsNotNone(random_restaurant)
+        self.assertEqual(random_restaurant[0].name, "範圍內餐廳")
+        self.assertEqual(len(random_restaurant), 1)
