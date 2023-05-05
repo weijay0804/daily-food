@@ -2,13 +2,15 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-05-04 21:00:29
+LastEditTime: 2023-05-05 02:00:14
 Description: DataBase ORM 模型單元測試
 '''
 
 import os
 import unittest
 from datetime import datetime
+
+from sqlalchemy import text
 
 from app.schemas import restaurant_schema
 from app.database.model import Restaurant
@@ -33,7 +35,10 @@ class InitialDataBaseTest(unittest.TestCase):
 
 
 class TestRestaurantModel(InitialDataBaseTest):
+    """Restaraunt Table ORM 模型單元測試"""
+
     def setUp(self) -> None:
+        # NOTE 如果之後 Restaurant 有做更改的話，這邊要記得改
         fake_restaurant = Restaurant(
             name="測試1",
             address="台北市信義區松壽路6段",
@@ -46,23 +51,25 @@ class TestRestaurantModel(InitialDataBaseTest):
             db.add(fake_restaurant)
             db.commit()
 
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
+
     def test_create_restaurant(self):
-        restaurant = Restaurant(
-            name="測試2",
-            address="新北市汐止區大同路一段",
-            lat=25.05741,
-            lng=121.63418,
-        )
+        fake_data = FakeData.fake_restaurant()
+
+        restaurant = Restaurant(**fake_data)
 
         with self.fake_database.get_db() as db:
             db.add(restaurant)
             db.commit()
 
             self.assertIsNotNone(restaurant.id)
-            self.assertEqual(restaurant.name, "測試2")
-            self.assertEqual(restaurant.address, "新北市汐止區大同路一段")
-            self.assertEqual(restaurant.lat, 25.05741)
-            self.assertEqual(restaurant.lng, 121.63418)
+            self.assertEqual(restaurant.name, fake_data["name"])
+            self.assertEqual(restaurant.address, fake_data["address"])
+            self.assertEqual(restaurant.lat, fake_data["lat"])
+            self.assertEqual(restaurant.lng, fake_data["lng"])
             self.assertEqual(restaurant.phone, None)
             self.assertEqual(restaurant.is_enable, 1)
             self.assertTrue(isinstance(restaurant.create_at, datetime))
@@ -82,62 +89,67 @@ class TestRestaurantModel(InitialDataBaseTest):
         self.assertEqual(restaurant.update_at, None)
 
     def test_update_restaurant(self):
-        restaurant = Restaurant(name="測試3", address="test", lat=25.00000, lng=120.00000)
+        fake_data = FakeData.fake_restaurant()
+
+        restaurant = Restaurant(**fake_data)
 
         with self.fake_database.get_db() as db:
             db.add(restaurant)
             db.commit()
 
-            restaurant = db.query(Restaurant).filter(Restaurant.name == "測試3").first()
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
-            self.assertEqual(restaurant.address, "test")
+            self.assertEqual(restaurant.address, fake_data["address"])
             self.assertEqual(restaurant.update_at, None)
 
             restaurant.address = "update_test"
             restaurant.update_at = datetime.utcnow()
             db.commit()
 
-            restaurant = db.query(Restaurant).filter(Restaurant.name == "測試3").first()
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         self.assertEqual(restaurant.address, "update_test")
         self.assertTrue(isinstance(restaurant.update_at, datetime))
 
     def test_delete_restaurant(self):
-        restaurant = Restaurant(name="測試4", address="test", lat=23.00000, lng=120.00000)
+        fake_data = FakeData.fake_restaurant()
+
+        restaurant = Restaurant(**fake_data)
 
         with self.fake_database.get_db() as db:
             db.add(restaurant)
             db.commit()
 
-            restaurant = db.query(Restaurant).filter(Restaurant.name == "測試4").first()
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
             self.assertIsNotNone(restaurant)
 
             db.delete(restaurant)
             db.commit()
 
-            restaurant = db.query(Restaurant).filter(Restaurant.name == "測試4").first()
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         self.assertIsNone(restaurant)
 
 
 class TestRestaurantCURD(InitialDataBaseTest):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
 
+    def test_get_restaurants_function(self):
         fake_data = []
 
         for _ in range(2):
             data = FakeData.fake_restaurant()
             fake_data.append(Restaurant(**data))
 
-        with cls.fake_database.get_db() as db:
+        with self.fake_database.get_db() as db:
             db.add_all(fake_data)
             db.commit()
             db.close()
 
-    def test_get_restaurants_function(self):
         with self.fake_database.get_db() as db:
             restaurants = crud.get_restaurants(db)
 
@@ -157,8 +169,14 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(db_restaurant.name, fake_data["name"])
 
     def test_update_restaurant_function(self):
+        fake_data = FakeData.fake_restaurant()
+
         with self.fake_database.get_db() as db:
-            restaurant = db.query(Restaurant).filter(Restaurant.id == 1).first()
+            db.add(Restaurant(**fake_data))
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
             update_data = restaurant_schema.ResFullCreateModel(
                 name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
@@ -172,9 +190,9 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(updated_restaurant.phone, restaurant.phone)
 
     def test_update_restaurant_function_with_not_exist_id(self):
-        update_data = restaurant_schema.ResFullCreateModel(
-            name="not exist", address="not exist", lat=23.001, lng=120.321
-        )
+        fake_data = FakeData.fake_restaurant()
+
+        update_data = restaurant_schema.ResFullCreateModel(**fake_data)
 
         with self.fake_database.get_db() as db:
             upadted_restaurant = crud.update_restaurant(db, 1000, update_data)
@@ -182,8 +200,14 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertIsNone(upadted_restaurant)
 
     def test_delete_restaurant_function(self):
+        fake_data = FakeData.fake_restaurant()
+
         with self.fake_database.get_db() as db:
-            restaurant = db.query(Restaurant).filter(Restaurant.id == 2).first()
+            db.add(Restaurant(**fake_data))
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
             crud.delete_restaurant(db, restaurant.id)
 
@@ -199,20 +223,19 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertIsNone(deleted_restaurant)
 
     def test_get_restaurant_randomly_function(self):
-        inner_restaurant = Restaurant(
-            name="範圍內餐廳", address="test address", lat=23.15668, lng=120.39037
-        )
+        fake_inner_data = FakeData.fake_restaurant()
+        fake_outer_data = FakeData.fake_restaurant_far()
 
-        outer_restaurant = Restaurant(
-            name="範圍外餐廳", address="test address", lat=25.01681, lng=121.29261
-        )
+        inner_restaurant = Restaurant(**fake_inner_data)
+        outer_restaurant = Restaurant(**fake_outer_data)
 
         with self.fake_database.get_db() as db:
             db.add_all([inner_restaurant, outer_restaurant])
             db.commit()
 
-            random_restaurant = crud.get_restaurant_randomly(db, 23.15703, 120.390386, 0.2, 1)
+            inner_lat, inner_lng = FakeData.fake_current_location()
+            random_restaurant = crud.get_restaurant_randomly(db, inner_lat, inner_lng, 5.0, 1)
 
         self.assertIsNotNone(random_restaurant)
-        self.assertEqual(random_restaurant[0].name, "範圍內餐廳")
+        self.assertEqual(random_restaurant[0].name, fake_inner_data["name"])
         self.assertEqual(len(random_restaurant), 1)

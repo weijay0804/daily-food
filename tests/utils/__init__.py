@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: weijay
-LastEditTime: 2023-04-27 16:10:15
+LastEditTime: 2023-05-04 21:44:24
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -21,6 +21,13 @@ class FakeData:
     """用來建立隨機測試資料"""
 
     def fake_restaurant(is_lat_lng: bool = True):
+        """生成假餐廳資料，比較近的
+
+        這裡的比較近是指使用 `fake_current_location()` 生成目標位置
+        使用 `fake_restaurant()` 生成的餐廳資料，會座落在目標位置附近
+
+        簡而言之，如果使用 `fake_restaurant()` 生成餐廳位置，如果要測試在目標範圍內的餐廳，就使用 `fake_current_location()` ( 5KM 內 )
+        """
         result = {}
 
         name = random.choice(_fake_data.FakeRestaurantData.FAKE_RESTAURANT_NAME)
@@ -33,6 +40,47 @@ class FakeData:
         result.update({"name": name, "address": address})
 
         return result
+
+    def fake_restaurant_far(is_lat_lng: bool = True):
+        """生成假餐廳資料，比較遠的
+
+        這裡的比較遠是指使用 `fake_cureent_location()` 生成的目標位置
+        使用 `fake_restaurant_far()` 生成的餐廳資料，會座落在目標位置很遠的地方
+
+        簡而言之，如果使用 `fake_restaurant_far()` 生成餐廳位置，如果要測試不在目標範圍內的餐廳，就用 `fake_current_location_far()`
+        """
+        result = {}
+
+        name = random.choice(_fake_data.FakeRestaurantData.FAKE_RESTAURANT_NAME_FAR)
+        address = random.choice(_fake_data.FakeRestaurantData.FAKE_RESTAURANT_ADDRESS_FAR)
+
+        if is_lat_lng:
+            lat, lng = random.choice(_fake_data.FakeRestaurantData.FAKE_RESTAURANT_LAT_LNG_FAR)
+            result.update({"lat": lat, "lng": lng})
+
+        result.update({"name": name, "address": address})
+
+        return result
+
+    def fake_current_location():
+        """生成目標位置
+
+        如果要測試在附近的餐廳，使用 `fake_restaurant()` ( 5KM 內 )
+        """
+
+        fake_location = [(24.94409, 121.22538), (24.94442, 121.22347), (24.94135, 121.22447)]
+
+        return random.choice(fake_location)
+
+    def fake_current_location_far():
+        """生成目標位置
+
+        如果要測試在附近的餐廳，使用 `fake_restaurant_far()` ( 5KM 內 )
+        """
+
+        fake_location = [(22.98856, 120.23490), (22.98892, 120.23356), (22.98796, 120.23541)]
+
+        return random.choice(fake_location)
 
 
 class FakeDataBase:

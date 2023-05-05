@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-04-30 23:57:09
+LastEditTime: 2023-05-05 21:35:47
 Description: Api Router 單元測試
 '''
 
@@ -12,6 +12,7 @@ import unittest
 from unittest import mock
 
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from app.config import config
 from app import create_app
@@ -34,17 +35,6 @@ class InitialTestClient(unittest.TestCase):
 
         cls.client = TestClient(cls.test_app)
 
-        # 先新增兩筆假資料到資料庫
-        fake_data = []
-
-        for _ in range(2):
-            data = FakeData.fake_restaurant()
-            fake_data.append(Restaurant(**data))
-
-        with cls.fake_database.get_db() as db:
-            db.add_all(fake_data)
-            db.commit()
-
     @classmethod
     def tearDownClass(cls) -> None:
         cls.fake_database.engine.clear_compiled_cache()
@@ -56,6 +46,11 @@ class InitialTestClient(unittest.TestCase):
 class TestResaurantRotuer(InitialTestClient):
     def setUp(self) -> None:
         self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
 
     def test_read_restaurant_router(self):
         fake_data = FakeData.fake_restaurant()
@@ -87,8 +82,13 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(response.json(), {"message": "created."})
 
     def test_upate_restaurant_router(self):
+        fake_data = FakeData.fake_restaurant()
         with self.fake_database.get_db() as db:
-            restaurant = db.query(Restaurant).filter(Restaurant.id == 1).first()
+            db.add(Restaurant(**fake_data))
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         response = self.client.patch(
             f"/api/v1/restaurant/{restaurant.id}",
@@ -103,44 +103,53 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(response.json()["address"], restaurant.address)
 
     def test_delete_restaurant_router(self):
+        fake_data = FakeData.fake_restaurant()
+
         with self.fake_database.get_db() as db:
-            restaurant = db.query(Restaurant).filter(Restaurant.id == 2).first()
+            db.add(Restaurant(**fake_data))
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         response = self.client.delete(f"/api/v1/restaurant/{restaurant.id}")
 
         with self.fake_database.get_db() as db:
-            deleted_restaurant = db.query(Restaurant).filter(Restaurant.id == 2).first()
+            deleted_restaurant = (
+                db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(deleted_restaurant)
 
     def test_read_retaurant_randomly_router(self):
-        innert_restaurant1 = Restaurant(
-            name="範圍內餐廳", address="test address", lat=23.13219, lng=120.25571
-        )
-
-        innert_restaurant2 = Restaurant(
-            name="範圍內餐廳2", address="test address", lat=23.13116, lng=120.25620
-        )
-
-        outer_restaruant = Restaurant(
-            name="範圍外餐廳", address="test address", lat=23.28754, lng=121.42666
-        )
+        inner_fake_data1 = FakeData.fake_restaurant()
+        inner_fake_data2 = FakeData.fake_restaurant()
+        outer_fake_data = FakeData.fake_restaurant_far()
 
         with self.fake_database.get_db() as db:
-            db.add_all([innert_restaurant1, innert_restaurant2, outer_restaruant])
+            db.add_all(
+                [
+                    Restaurant(**inner_fake_data1),
+                    Restaurant(**inner_fake_data2),
+                    Restaurant(**outer_fake_data),
+                ]
+            )
 
             db.commit()
 
-        lat, lng = 23.13125, 120.25678
-        distance = 0.5
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
 
         response = self.client.get(
             f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()['items'][0]["name"] in ("範圍內餐廳", "範圍內餐廳2"))
+        self.assertTrue(
+            response.json()['items'][0]["name"]
+            in (inner_fake_data1["name"], inner_fake_data2["name"])
+        )
         self.assertEqual(len(response.json()['items']), 1)
 
         response = self.client.get(
