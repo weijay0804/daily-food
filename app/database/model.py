@@ -2,14 +2,26 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-05-10 15:23:43
+LastEditTime: 2023-05-10 15:44:12
 Description: 定義  DataBase ORM 模型
 '''
 
 from typing import Union
-from datetime import datetime
+from datetime import datetime, time
 
-from sqlalchemy import Index, String, Integer, Column, Text, Float, DateTime, Boolean
+from sqlalchemy import (
+    Index,
+    String,
+    Integer,
+    Column,
+    Text,
+    Float,
+    DateTime,
+    Boolean,
+    Time,
+    ForeignKey,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -27,6 +39,8 @@ class Restaurant(Base):
     is_enable = Column(Boolean, default=True)
     create_at = Column(DateTime, default=datetime.utcnow)
     update_at = Column(DateTime, server_default=None)
+
+    open_times = relationship("RestaurantOpenTime", back_populates="open_times")
 
     __table_args__ = (Index("idx_lat_lng", "lat", "lng"),)
 
@@ -46,3 +60,26 @@ class Restaurant(Base):
 
     def __repr__(self):
         return f"Data in restaurant table, name = {self.name}"
+
+
+class RestaurantOpenTime(Base):
+    __tablename__ = "restaurant_open_time"
+
+    id = Column(Integer, primary_key=True)
+    restaurant_id = Column(Integer, ForeignKey("restaurant.id"), nullable=False)
+    day_of_week = Column(Integer, nullable=False)
+    open_time = Column(Time, nullable=False)
+    close_time = Column(Time, nullable=False)
+    create_at = Column(DateTime, default=datetime.utcnow)
+    update_at = Column(DateTime, server_default=None)
+
+    __table_args__ = (
+        Index('idx_restaurant_id_day_of_week', 'restaurant_id', 'day_of_week'),
+        Index('idx_restaurant_id', 'restaurant_id'),
+    )
+
+    def __init__(self, restaurant_id: int, day_of_week: int, open_time: time, close_time: time):
+        self.restaurant_id = restaurant_id
+        self.day_of_week = day_of_week
+        self.open_time = open_time
+        self.close_time = close_time
