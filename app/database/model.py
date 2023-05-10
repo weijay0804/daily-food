@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-04-28 00:09:11
+LastEditTime: 2023-05-10 15:23:43
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -10,8 +10,9 @@ from typing import Union
 from datetime import datetime
 
 from sqlalchemy import Index, String, Integer, Column, Text, Float, DateTime, Boolean
+from sqlalchemy.ext.declarative import declarative_base
 
-from app.database import Base
+Base = declarative_base()
 
 
 class Restaurant(Base):

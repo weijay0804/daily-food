@@ -2,14 +2,13 @@
 Author: weijay
 Date: 2023-04-24 20:28:52
 LastEditors: weijay
-LastEditTime: 2023-04-26 01:17:05
+LastEditTime: 2023-05-10 15:23:57
 Description: Initial DataBase ORM
 '''
 
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
@@ -28,5 +27,3 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
 engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
