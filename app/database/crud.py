@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-04-30 17:39:22
+LastEditTime: 2023-05-10 16:13:21
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -98,18 +98,19 @@ def get_restaurant_randomly(db: Session, lat: float, lng: float, distance: float
     (
         6371 * 2 * ASIN(
             SQRT(
-                POWER(SIN((%f - ABS(lat)) * PI() / 180 / 2), 2)
-                + COS(%f * PI() / 180)
+                POWER(SIN((:lat - ABS(lat)) * PI() / 180 / 2), 2)
+                + COS(:lat * PI() / 180)
                 * COS(ABS(lat) * PI() / 180)
-                * POWER(SIN((%f - lng) * PI() / 180 / 2), 2)
+                * POWER(SIN((:lng - lng) * PI() / 180 / 2), 2)
             )
         )
-    ) <= %f
+    ) <= :distance
     """
 
     items = (
         db.query(model.Restaurant)
-        .filter(text(sql_text % (lat, lat, lng, distance)))
+        .filter(text(sql_text))
+        .params(lat=lat, lng=lng, distance=distance)
         .order_by(func.random())
         .limit(limit)
         .all()
