@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: weijay
-LastEditTime: 2023-05-04 21:44:24
+LastEditTime: 2023-05-11 21:47:38
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -81,6 +81,19 @@ class FakeData:
         fake_location = [(22.98856, 120.23490), (22.98892, 120.23356), (22.98796, 120.23541)]
 
         return random.choice(fake_location)
+
+    def fake_restaurant_open_time():
+        """生成假餐廳營業時間
+
+        ( 不會包括 restaurant_id 欄位，需要自己增加，因為考慮之後會要根據 restaurant 的資料來關聯)
+
+        """
+
+        day_of_week = random.choice(_fake_data.FakeRestaurantOpenTimeData.DAY_OF_WEEK)
+        open_time = random.choice(_fake_data.FakeRestaurantOpenTimeData.OPEN_TIME)
+        close_time = random.choice(_fake_data.FakeRestaurantOpenTimeData.CLOSE_TIME)
+
+        return {"day_of_week": day_of_week, "open_time": open_time, "close_time": close_time}
 
 
 class FakeDataBase:

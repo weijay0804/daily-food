@@ -2,9 +2,11 @@
 Author: weijay
 Date: 2023-04-27 14:59:26
 LastEditors: weijay
-LastEditTime: 2023-05-04 21:40:13
+LastEditTime: 2023-05-11 21:44:04
 Description: 測試資料
 '''
+
+from datetime import time
 
 
 class FakeRestaurantData:
@@ -43,3 +45,10 @@ class FakeRestaurantData:
         (22.98896, 120.23459),
         (22.98885, 120.23370),
     ]
+
+
+class FakeRestaurantOpenTimeData:
+    DAY_OF_WEEK = [1, 2, 3, 4, 5, 6, 7]
+
+    OPEN_TIME = [time(hour=12, minute=0), time(hour=9, minute=30), time(hour=15, minute=0)]
+    CLOSE_TIME = [time(hour=20, minute=30), time(hour=21, minute=0), time(hour=22, minute=0)]
