@@ -2,16 +2,22 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-01 00:16:28
+LastEditTime: 2023-05-12 17:19:11
 Description: 餐廳路由
 '''
 
-from typing import Union
+from typing import Union, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.schemas.restaurant_schema import ResReadModel, ResCreateModel, ResModel, ResFullCreateModel
+from app.schemas.restaurant_schema import (
+    ResReadModel,
+    ResCreateModel,
+    ResModel,
+    ResFullCreateModel,
+    ResOTCreateModel,
+)
 from app.database import SessionLocal
 from app.database import crud
 from app.utils import MapApi
@@ -38,8 +44,11 @@ def read_restaurants(db: Session = Depends(get_db)):
     return ResReadModel(items=items)
 
 
+# 這裡改成分開傳送資料比較好 open_time
 @router.post("/", status_code=201)
-def create_restaurant(items: ResCreateModel, db: Session = Depends(get_db)):
+def create_restaurant(
+    items: ResCreateModel, open_times: List[ResOTCreateModel], db: Session = Depends(get_db)
+):
     """新增餐廳"""
 
     # 使用第三方 Api 取得經緯度
@@ -53,7 +62,8 @@ def create_restaurant(items: ResCreateModel, db: Session = Depends(get_db)):
             detail=f"The address '{items.address}' format is incorrect and cannot be processed correctly",
         )
 
-    crud.create_restaurant(db, full_item)
+    db_restaurant = crud.create_restaurant(db, full_item)
+    crud.create_restaurant_open_times(db, db_restaurant.id, open_times)
 
     return {"message": "created."}
 

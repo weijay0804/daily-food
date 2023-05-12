@@ -2,14 +2,33 @@
 Author: weijay
 Date: 2023-04-24 17:08:09
 LastEditors: weijay
-LastEditTime: 2023-04-27 01:24:05
+LastEditTime: 2023-05-12 16:10:18
 Description: 定義 restaurant router 的數據模型
 '''
 
-from datetime import datetime
+from datetime import datetime, time
 from typing import Union, List
 
 from pydantic import BaseModel
+
+
+class ResOTBase(BaseModel):
+    day_of_week: int
+    open_time: time
+    close_time: time
+
+
+class ResOTDBModel(ResOTBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ResOTCreateModel(ResOTBase):
+    """新增餐廳營業時間 資料架構"""
+
+    pass
 
 
 class ResBase(BaseModel):
@@ -27,6 +46,7 @@ class ResModel(ResBase):
     is_enable: Union[bool, None] = True
     create_at: datetime
     update_at: datetime = None
+    open_times: List[ResOTDBModel]
 
     class Config:
         orm_mode = True

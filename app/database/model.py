@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-05-10 16:11:46
+LastEditTime: 2023-05-12 17:15:58
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -40,7 +40,9 @@ class Restaurant(Base):
     create_at = Column(DateTime, default=datetime.utcnow)
     update_at = Column(DateTime, server_default=None)
 
-    open_times = relationship("RestaurantOpenTime", back_populates="restaurant")
+    open_times = relationship(
+        "RestaurantOpenTime", back_populates="restaurant", cascade="all, delete"
+    )
 
     __table_args__ = (Index("idx_lat_lng", "lat", "lng"),)
 
@@ -83,5 +85,5 @@ class RestaurantOpenTime(Base):
     def __init__(self, restaurant_id: int, day_of_week: int, open_time: time, close_time: time):
         self.restaurant_id = restaurant_id
         self.day_of_week = day_of_week
-        self.open_time = open_time
-        self.close_time = close_time
+        self.open_time = time(hour=open_time.hour, minute=open_time.minute)
+        self.close_time = time(hour=close_time.hour, minute=close_time.minute)

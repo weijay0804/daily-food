@@ -2,10 +2,11 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-10 16:13:21
+LastEditTime: 2023-05-12 15:24:21
 Description: 對資料庫進行 CRUD 操作
 '''
 
+from typing import List
 from datetime import datetime
 
 from sqlalchemy import func, text
@@ -13,6 +14,26 @@ from sqlalchemy.orm import Session
 
 from app.database import model
 from app.schemas import restaurant_schema
+
+
+def create_restaurant_open_times(
+    db: Session, restaurant_id: int, open_times: List[restaurant_schema.ResOTCreateModel]
+):
+    """建立餐廳營業時間
+
+    為了方便，可以一次新增多個營業時間，但必須是同一個餐廳
+
+    """
+
+    db_open_times = []
+
+    for open_time in open_times:
+        db_open_times.append(
+            model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
+        )
+
+    db.add_all(db_open_times)
+    db.commit()
 
 
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
