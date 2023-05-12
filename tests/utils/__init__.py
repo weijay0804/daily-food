@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: weijay
-LastEditTime: 2023-05-11 21:47:38
+LastEditTime: 2023-05-12 17:04:07
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -82,7 +82,7 @@ class FakeData:
 
         return random.choice(fake_location)
 
-    def fake_restaurant_open_time():
+    def fake_restaurant_open_time(to_str: bool = False):
         """生成假餐廳營業時間
 
         ( 不會包括 restaurant_id 欄位，需要自己增加，因為考慮之後會要根據 restaurant 的資料來關聯)
@@ -92,6 +92,10 @@ class FakeData:
         day_of_week = random.choice(_fake_data.FakeRestaurantOpenTimeData.DAY_OF_WEEK)
         open_time = random.choice(_fake_data.FakeRestaurantOpenTimeData.OPEN_TIME)
         close_time = random.choice(_fake_data.FakeRestaurantOpenTimeData.CLOSE_TIME)
+
+        if to_str:
+            open_time = open_time.strftime("%H:%M")
+            close_time = close_time.strftime("%H:%M")
 
         return {"day_of_week": day_of_week, "open_time": open_time, "close_time": close_time}
 
