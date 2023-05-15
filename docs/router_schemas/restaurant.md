@@ -39,15 +39,21 @@ Return
 
     "items": [
         {
+            "id" : 1,
             "name" : "鼎泰豐",
             "address" : "台北市信義區松高路一段",
             "phone" : "0228472392",
+            "lat" : 23.00123,
+            "lng" : 120.2314,
             "is_open" : true
         },
         {
+            "id" : 2,
             "name" : "麥當勞",
             "address" : "台北市信義區松仁路二段",
             "phone" : "022844313",
+            "lat" : 23.00123,
+            "lng" : 120.2314,
             "is_open" : false
         }
     ]
@@ -88,6 +94,7 @@ Return
 ```json
 {
     
+    "id" : 1,
     "name" : "鼎泰豐",
     "address" : "台北市信義區松高路一段",
     "phone" : "02254134"
