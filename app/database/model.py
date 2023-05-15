@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-05-12 17:15:58
+LastEditTime: 2023-05-15 22:38:47
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -87,3 +87,13 @@ class RestaurantOpenTime(Base):
         self.day_of_week = day_of_week
         self.open_time = time(hour=open_time.hour, minute=open_time.minute)
         self.close_time = time(hour=close_time.hour, minute=close_time.minute)
+
+    def to_dict(self):
+        """把 ORM object 轉換成 dict"""
+
+        return {
+            "id": self.id,
+            "day_of_week": self.day_of_week,
+            "open_time": self.open_time,
+            "close_time": self.close_time,
+        }
