@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-05-11 23:03:09
+LastEditTime: 2023-05-15 20:51:02
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -12,7 +12,7 @@ from datetime import datetime, time
 
 from sqlalchemy import text
 
-from app.schemas import restaurant_schema
+from app.schemas import database_schema
 from app.database.model import Restaurant, RestaurantOpenTime
 from app.database import crud
 from tests.utils import FakeData, FakeDataBase
@@ -266,7 +266,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def test_create_restaurant_function(self):
         fake_data = FakeData.fake_restaurant()
 
-        restaurant = restaurant_schema.ResFullCreateModel(**fake_data, phone="0932212849")
+        restaurant = database_schema.RestaurantDBModel(**fake_data, phone="0932212849")
 
         with self.fake_database.get_db() as db:
             db_restaurant = crud.create_restaurant(db, restaurant)
@@ -285,7 +285,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         with self.fake_database.get_db() as db:
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
-            update_data = restaurant_schema.ResFullCreateModel(
+            update_data = database_schema.RestaurantDBModel(
                 name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
             )
 
@@ -299,7 +299,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def test_update_restaurant_function_with_not_exist_id(self):
         fake_data = FakeData.fake_restaurant()
 
-        update_data = restaurant_schema.ResFullCreateModel(**fake_data)
+        update_data = database_schema.RestaurantDBModel(**fake_data)
 
         with self.fake_database.get_db() as db:
             upadted_restaurant = crud.update_restaurant(db, 1000, update_data)

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-05-12 17:23:16
+LastEditTime: 2023-05-15 19:37:49
 Description: Api Router 單元測試
 '''
 
@@ -73,13 +73,10 @@ class TestResaurantRotuer(InitialTestClient):
     @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))
     def test_create_restaurant_router(self, mock_get_coords):
         fake_restaurant = FakeData.fake_restaurant(is_lat_lng=False)
-        fake_open_times = [FakeData.fake_restaurant_open_time(to_str=True) for _ in range(2)]
-
-        fake_data = {"items": fake_restaurant, "open_times": fake_open_times}
 
         response = self.client.post(
             "/api/v1/restaurant",
-            json=fake_data,
+            json=fake_restaurant,
         )
 
         self.assertEqual(response.status_code, 201)

@@ -2,38 +2,37 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-12 15:24:21
+LastEditTime: 2023-05-15 20:53:48
 Description: 對資料庫進行 CRUD 操作
 '''
 
-from typing import List
 from datetime import datetime
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app.database import model
-from app.schemas import restaurant_schema
+from app.schemas import database_schema
 
 
-def create_restaurant_open_times(
-    db: Session, restaurant_id: int, open_times: List[restaurant_schema.ResOTCreateModel]
-):
-    """建立餐廳營業時間
+# def create_restaurant_open_times(
+#     db: Session, restaurant_id: int, open_times: List[restaurant_schema.ResOTCreateModel]
+# ):
+#     """建立餐廳營業時間
 
-    為了方便，可以一次新增多個營業時間，但必須是同一個餐廳
+#     為了方便，可以一次新增多個營業時間，但必須是同一個餐廳
 
-    """
+#     """
 
-    db_open_times = []
+#     db_open_times = []
 
-    for open_time in open_times:
-        db_open_times.append(
-            model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
-        )
+#     for open_time in open_times:
+#         db_open_times.append(
+#             model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
+#         )
 
-    db.add_all(db_open_times)
-    db.commit()
+#     db.add_all(db_open_times)
+#     db.commit()
 
 
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
@@ -48,7 +47,7 @@ def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     return db.query(model.Restaurant).offset(skip).limit(limit).all()
 
 
-def create_restaurant(db: Session, restaurant: restaurant_schema.ResFullCreateModel):
+def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel):
     """建立餐廳資料"""
 
     db_restaurant = model.Restaurant(
@@ -67,7 +66,7 @@ def create_restaurant(db: Session, restaurant: restaurant_schema.ResFullCreateMo
 
 
 def update_restaurant(
-    db: Session, restaurant_id: int, updated_data: restaurant_schema.ResFullCreateModel
+    db: Session, restaurant_id: int, updated_data: database_schema.RestaurantDBModel
 ):
     """更新餐廳資料，如果資料庫中找不到傳進來的 `restaurant_id` 資料，則回傳 `None`"""
 

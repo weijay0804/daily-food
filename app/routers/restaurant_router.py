@@ -2,22 +2,16 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-12 17:19:11
+LastEditTime: 2023-05-15 20:53:36
 Description: 餐廳路由
 '''
 
-from typing import Union, List
+from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.schemas.restaurant_schema import (
-    ResReadModel,
-    ResCreateModel,
-    ResModel,
-    ResFullCreateModel,
-    ResOTCreateModel,
-)
+from app.schemas import restaurant_schema, database_schema
 from app.database import SessionLocal
 from app.database import crud
 from app.utils import MapApi
@@ -35,26 +29,24 @@ def get_db():
         db.close()
 
 
-@router.get("/", response_model=ResReadModel)
+@router.get("/", response_model=restaurant_schema.ReadsModel)
 def read_restaurants(db: Session = Depends(get_db)):
     """取得所有餐廳"""
 
     items = crud.get_restaurants(db)
 
-    return ResReadModel(items=items)
+    return restaurant_schema.ReadsModel(items=items)
 
 
 # 這裡改成分開傳送資料比較好 open_time
 @router.post("/", status_code=201)
-def create_restaurant(
-    items: ResCreateModel, open_times: List[ResOTCreateModel], db: Session = Depends(get_db)
-):
+def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session = Depends(get_db)):
     """新增餐廳"""
 
     # 使用第三方 Api 取得經緯度
     lat, lng = MapApi().get_coords(items.address)
 
-    full_item = ResFullCreateModel(**items.dict(), lat=lat, lng=lng)
+    full_item = database_schema.RestaurantDBModel(**items.dict(), lat=lat, lng=lng)
 
     if not (lat and lng):
         raise HTTPException(
@@ -62,14 +54,15 @@ def create_restaurant(
             detail=f"The address '{items.address}' format is incorrect and cannot be processed correctly",
         )
 
-    db_restaurant = crud.create_restaurant(db, full_item)
-    crud.create_restaurant_open_times(db, db_restaurant.id, open_times)
+    crud.create_restaurant(db, full_item)
 
     return {"message": "created."}
 
 
-@router.patch("/{restaurant_id}", response_model=ResModel)
-def update_restaurant(restaurant_id: str, item: ResCreateModel, db: Session = Depends(get_db)):
+@router.patch("/{restaurant_id}", response_model=restaurant_schema.ReadModel)
+def update_restaurant(
+    restaurant_id: str, item: restaurant_schema.CreateOrUpdateModel, db: Session = Depends(get_db)
+):
     """更新餐廳"""
 
     updated_restaurant = crud.update_restaurant(db, restaurant_id, item)
@@ -98,7 +91,7 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
 
 
-@router.get("/choice", response_model=ResReadModel)
+@router.get("/choice", response_model=restaurant_schema.ReadsModel)
 def read_restaurant_randomly(
     lat: float = Query(default=..., description="所在位置的緯度值"),
     lng: float = Query(default=..., description="所在位置的經度值"),
@@ -110,4 +103,4 @@ def read_restaurant_randomly(
 
     random_restaurants = crud.get_restaurant_randomly(db, lat, lng, distance, limit)
 
-    return ResReadModel(items=random_restaurants)
+    return restaurant_schema.ReadsModel(items=random_restaurants)
