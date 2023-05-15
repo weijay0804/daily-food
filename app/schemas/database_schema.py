@@ -1,0 +1,19 @@
+'''
+Author: weijay
+Date: 2023-05-15 20:03:52
+LastEditors: weijay
+LastEditTime: 2023-05-15 20:47:45
+Description: 針對 database 中的 table 定義的 schemas
+'''
+from pydantic import BaseModel
+from typing import Union
+
+
+class RestaurantDBModel(BaseModel):
+    """要建立 restaurant table 的資料時的 schemas model"""
+
+    name: str
+    address: str
+    phone: Union[str, None] = None
+    lat: float
+    lng: float
