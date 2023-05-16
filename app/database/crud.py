@@ -2,11 +2,12 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-15 20:53:48
+LastEditTime: 2023-05-16 14:52:14
 Description: 對資料庫進行 CRUD 操作
 '''
 
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
@@ -15,24 +16,78 @@ from app.database import model
 from app.schemas import database_schema
 
 
-# def create_restaurant_open_times(
-#     db: Session, restaurant_id: int, open_times: List[restaurant_schema.ResOTCreateModel]
-# ):
-#     """建立餐廳營業時間
+def get_restaurant_open_times(db: Session, restaurant_id: int):
+    """取得 restauarnt_id 餐廳的所有營業時歌間"""
 
-#     為了方便，可以一次新增多個營業時間，但必須是同一個餐廳
+    restaurant = db.query(model.Restaurant).filter(model.Restaurant.id == restaurant_id).first()
 
-#     """
+    if restaurant is None:
+        return None
 
-#     db_open_times = []
+    return restaurant.open_times
 
-#     for open_time in open_times:
-#         db_open_times.append(
-#             model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
-#         )
 
-#     db.add_all(db_open_times)
-#     db.commit()
+def create_restaurant_open_times(
+    db: Session, restaurant_id: int, open_times: List[database_schema.RestaurantOpenTimeDBModel]
+):
+    """建立餐廳營業時間
+
+    為了方便，可以一次新增多個營業時間，但必須是同一個餐廳
+
+    """
+
+    db_open_times = []
+
+    for open_time in open_times:
+        db_open_times.append(
+            model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
+        )
+
+    db.add_all(db_open_times)
+    db.commit()
+
+
+def update_restaurant_open_time(
+    db: Session, open_time_id: int, update_data: database_schema.RestaurantOpenTimeDBModel
+):
+    """更新餐廳營業時間資料，如果找不到，則回傳 None"""
+
+    open_time = (
+        db.query(model.RestaurantOpenTime)
+        .filter(model.RestaurantOpenTime.id == open_time_id)
+        .first()
+    )
+
+    if open_time is None:
+        return None
+
+    for field, value in update_data.dict(exclude_unset=True).items():
+        setattr(open_time, field, value)
+
+    open_time.update_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(open_time)
+
+    return open_time
+
+
+def delete_restaurant_open_time(db: Session, open_time_id: int):
+    """刪除餐廳營業時間資料，如果找不到，則回傳 None"""
+
+    open_time = (
+        db.query(model.RestaurantOpenTime)
+        .filter(model.RestaurantOpenTime.id == open_time_id)
+        .first()
+    )
+
+    if not open_time:
+        return None
+
+    db.delete(open_time)
+    db.commit()
+
+    return open_time
 
 
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
