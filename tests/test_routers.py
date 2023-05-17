@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-05-15 19:37:49
+LastEditTime: 2023-05-18 01:23:35
 Description: Api Router 單元測試
 '''
 
@@ -16,7 +16,7 @@ from sqlalchemy import text
 
 from app.config import config
 from app import create_app
-from app.database.model import Restaurant
+from app.database.model import Restaurant, RestaurantOpenTime
 from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
 from app.routers.restaurant_router import get_db
@@ -115,6 +115,8 @@ class TestResaurantRotuer(InitialTestClient):
 
         response = self.client.delete(f"/api/v1/restaurant/{restaurant.id}")
 
+        # HACK 這邊應該不用再去資料庫裡面查詢
+        # HACK 因為這個 delete 的功能在 crud 那邊已經測試過
         with self.fake_database.get_db() as db:
             deleted_restaurant = (
                 db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
@@ -159,3 +161,100 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['items']), 2)
+
+
+class TestRestaurantOpenTimeRouter(InitialTestClient):
+    def to_datetime(self, str):
+        import datetime
+
+        return datetime.datetime.strptime(str, "%H:%M:%S").time()
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        fake_reatuant = FakeData.fake_restaurant()
+
+        db_restaurant = Restaurant(**fake_reatuant)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+        cls.fake_restaurant_id = db_restaurant.id
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant_open_time"))
+            db.commit()
+
+    def test_read_restaurant_open_times_router(self):
+        fake_open_time = FakeData.fake_restaurant_open_time()
+        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
+
+        with self.fake_database.get_db() as db:
+            db.add(db_open_time)
+            db.commit()
+
+            db.refresh(db_open_time)
+
+        response = self.client.get(f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time")
+
+        data = response.json()["items"]
+
+        datetime_open_time = self.to_datetime(data[0]["open_time"])
+        datetime_close_time = self.to_datetime(data[0]["close_time"])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(data, list))
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["day_of_week"], fake_open_time["day_of_week"])
+        self.assertEqual(datetime_open_time, fake_open_time["open_time"])
+        self.assertEqual(datetime_close_time, fake_open_time["close_time"])
+
+    def test_create_restaurant_open_time_router(self):
+        items = [FakeData.fake_restaurant_open_time(to_str=True) for _ in range(2)]
+        response = self.client.post(
+            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json(), {"message": "created."})
+
+    def test_upadte_restaurant_open_time_router(self):
+        fake_open_time = FakeData.fake_restaurant_open_time()
+
+        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
+
+        with self.fake_database.get_db() as db:
+            db.add(db_open_time)
+            db.commit()
+            db.refresh(db_open_time)
+
+        response = self.client.patch(
+            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time/{db_open_time.id}",
+            json={"day_of_week": 100},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["day_of_week"], 100)
+
+    def test_delete_restaurant_open_time_router(self):
+        fake_open_time = FakeData.fake_restaurant_open_time()
+
+        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
+
+        with self.fake_database.get_db() as db:
+            db.add(db_open_time)
+            db.commit()
+            db.refresh(db_open_time)
+
+        response = self.client.delete(
+            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time/{db_open_time.id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
