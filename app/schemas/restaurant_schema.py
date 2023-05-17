@@ -2,10 +2,11 @@
 Author: weijay
 Date: 2023-04-24 17:08:09
 LastEditors: weijay
-LastEditTime: 2023-05-15 20:30:14
+LastEditTime: 2023-05-17 01:00:21
 Description: 定義 restaurant router 的數據模型
 '''
 
+import datetime
 from typing import Union, List
 
 from pydantic import BaseModel
@@ -52,3 +53,40 @@ class CreateOrUpdateModel(__BaseModel):
     """新增一筆簪聽資料時的 schemas model"""
 
     pass
+
+
+class OpenTimeBaseModel(BaseModel):
+    """餐廳營業時間基本 schemas model"""
+
+    day_of_week: int
+    open_time: datetime.time
+    close_time: datetime.time
+
+
+class OpenTimeModel(OpenTimeBaseModel):
+    """對應 restaurant_open_time table 的 schemas model"""
+
+    id: int
+
+    class Config:
+        orm_model = True
+
+
+class ReadsOpenTimeModel(BaseModel):
+    """取得餐廳營業時間時的 schemas model"""
+
+    items: List[OpenTimeModel]
+
+
+class CreateOpenTimeModel(BaseModel):
+    """新增餐廳營業時間時的 schemas model (為了方便，設計成一次可以建立多個營業時間)"""
+
+    items: List[OpenTimeBaseModel]
+
+
+class UpdateOpenTimeModel(BaseModel):
+    """更新餐廳營業時間時的 schemas model"""
+
+    day_of_week: Union[int, None] = None
+    open_time: Union[datetime.time, None] = None
+    close_time: Union[datetime.time, None] = None

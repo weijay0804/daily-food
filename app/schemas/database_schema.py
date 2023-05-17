@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 20:03:52
 LastEditors: weijay
-LastEditTime: 2023-05-15 22:03:49
+LastEditTime: 2023-05-18 00:27:29
 Description: 針對 database 中的 table 定義的 schemas
 '''
 
@@ -27,3 +27,11 @@ class RestaurantOpenTimeDBModel(BaseModel):
     day_of_week: int
     open_time: datetime.time
     close_time: datetime.time
+
+
+class RestaurantOpenTimeUpdateDBModel(BaseModel):
+    """要更新 restaurant_open_time table 的資料時的 schames model"""
+
+    day_of_week: Union[int, None] = None
+    open_time: Union[datetime.time, None] = None
+    close_time: Union[datetime.time, None] = None
