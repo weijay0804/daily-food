@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-16 14:52:14
+LastEditTime: 2023-05-18 00:28:08
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -48,7 +48,7 @@ def create_restaurant_open_times(
 
 
 def update_restaurant_open_time(
-    db: Session, open_time_id: int, update_data: database_schema.RestaurantOpenTimeDBModel
+    db: Session, open_time_id: int, update_data: database_schema.RestaurantOpenTimeUpdateDBModel
 ):
     """更新餐廳營業時間資料，如果找不到，則回傳 None"""
 
