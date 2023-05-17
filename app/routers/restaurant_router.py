@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-15 20:53:36
+LastEditTime: 2023-05-18 00:42:30
 Description: 餐廳路由
 '''
 
@@ -59,6 +59,7 @@ def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session 
     return {"message": "created."}
 
 
+# HACK 用 database_schema.RestaurantUpdateDBModel
 @router.patch("/{restaurant_id}", response_model=restaurant_schema.ReadModel)
 def update_restaurant(
     restaurant_id: str, item: restaurant_schema.CreateOrUpdateModel, db: Session = Depends(get_db)
@@ -89,6 +90,69 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
         )
 
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
+
+
+@router.get("/{restaurant_id}/open_time", response_model=restaurant_schema.ReadsOpenTimeModel)
+def read_restaurant_open_times(restaurant_id: int, db: Session = Depends(get_db)):
+    db_itmes = crud.get_restaurant_open_times(db, restaurant_id)
+
+    # HACK 檢查 db_items 是否為 None
+    items = []
+
+    for i in db_itmes:
+        items.append(restaurant_schema.OpenTimeModel(**(i.to_dict())))
+
+    return restaurant_schema.ReadsOpenTimeModel(items=items)
+
+
+@router.post("/{restaurant_id}/open_time", status_code=201)
+def create_restaurnt_open_tim(
+    restaurant_id: int,
+    open_times: restaurant_schema.CreateOpenTimeModel,
+    db: Session = Depends(get_db),
+):
+    open_times_obj = [
+        database_schema.RestaurantOpenTimeDBModel(**open_time.dict())
+        for open_time in open_times.items
+    ]
+
+    crud.create_restaurant_open_times(db, restaurant_id, open_times_obj)
+
+    return {"message": "created."}
+
+
+@router.patch(
+    "/{restaurant_id}/open_time/{open_time_id}", response_model=restaurant_schema.OpenTimeModel
+)
+def update_restauarnt_open_time(
+    restaurant_id: int,
+    open_time_id: int,
+    item: restaurant_schema.UpdateOpenTimeModel,
+    db: Session = Depends(get_db),
+):
+    db_update_obj = database_schema.RestaurantOpenTimeUpdateDBModel(**item.dict(exclude_unset=True))
+    updated_open_time = crud.update_restaurant_open_time(db, open_time_id, db_update_obj)
+
+    if not updated_open_time:
+        raise HTTPException(
+            status_code=404, detail=f"The open time ID: {open_time_id} is not founded in database."
+        )
+
+    return restaurant_schema.OpenTimeModel(**updated_open_time.to_dict())
+
+
+@router.delete("/{restaurant_id}/open_time/{open_time_id}", status_code=200)
+def delete_restaurant_open_time(
+    restaurant_id: int, open_time_id: int, db: Session = Depends(get_db)
+):
+    deleted_open_time = crud.delete_restaurant_open_time(db, open_time_id)
+
+    if not deleted_open_time:
+        raise HTTPException(
+            status_code=404, detail=f"The open time ID: {open_time_id} is not founed in database."
+        )
+
+    return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
 
 @router.get("/choice", response_model=restaurant_schema.ReadsModel)
