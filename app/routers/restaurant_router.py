@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-22 19:48:09
+LastEditTime: 2023-05-22 19:52:19
 Description: 餐廳路由
 '''
 
@@ -92,8 +92,10 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
 def read_restaurant_open_times(restaurant_id: int, db: Session = Depends(get_db)):
     db_itmes = crud.get_restaurant_open_times(db, restaurant_id)
 
-    # HACK 檢查 db_items 是否為 None
     items = []
+
+    if db_itmes is None:
+        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
     for i in db_itmes:
         items.append(restaurant_schema.OpenTimeModel(**(i.to_dict())))
