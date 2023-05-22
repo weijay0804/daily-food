@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 20:03:52
 LastEditors: weijay
-LastEditTime: 2023-05-18 00:27:29
+LastEditTime: 2023-05-22 18:58:20
 Description: 針對 database 中的 table 定義的 schemas
 '''
 
@@ -19,6 +19,16 @@ class RestaurantDBModel(BaseModel):
     phone: Union[str, None] = None
     lat: float
     lng: float
+
+
+class RestaurantUpdateDBModel(BaseModel):
+    """要更新 restaurant table 的資料時的 schames model"""
+
+    name: Union[str, None] = None
+    address: Union[str, None] = None
+    phone: Union[str, None] = None
+    lat: Union[float, None] = None
+    lng: Union[float, None] = None
 
 
 class RestaurantOpenTimeDBModel(BaseModel):

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-18 00:42:30
+LastEditTime: 2023-05-22 19:14:04
 Description: 餐廳路由
 '''
 
@@ -59,14 +59,15 @@ def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session 
     return {"message": "created."}
 
 
-# HACK 用 database_schema.RestaurantUpdateDBModel
 @router.patch("/{restaurant_id}", response_model=restaurant_schema.ReadModel)
 def update_restaurant(
-    restaurant_id: str, item: restaurant_schema.CreateOrUpdateModel, db: Session = Depends(get_db)
+    restaurant_id: str, item: restaurant_schema.UpdateModel, db: Session = Depends(get_db)
 ):
     """更新餐廳"""
 
-    updated_restaurant = crud.update_restaurant(db, restaurant_id, item)
+    updated_restaurant = crud.update_restaurant(
+        db, restaurant_id, database_schema.RestaurantUpdateDBModel(**item.dict())
+    )
 
     if not updated_restaurant:
         raise HTTPException(

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-18 00:28:08
+LastEditTime: 2023-05-22 19:08:49
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -121,7 +121,7 @@ def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel
 
 
 def update_restaurant(
-    db: Session, restaurant_id: int, updated_data: database_schema.RestaurantDBModel
+    db: Session, restaurant_id: int, updated_data: database_schema.RestaurantUpdateDBModel
 ):
     """更新餐廳資料，如果資料庫中找不到傳進來的 `restaurant_id` 資料，則回傳 `None`"""
 
@@ -131,8 +131,11 @@ def update_restaurant(
         return None
 
     # 只要更新有傳入的資料就好，其他欄位如果沒有更新，就照舊
-    for field, value in updated_data.dict(exclude_unset=True).items():
-        setattr(restaurant, field, value)
+    for field, value in updated_data.dict().items():
+        if value is None:
+            continue
+        else:
+            setattr(restaurant, field, value)
 
     restaurant.update_at = datetime.utcnow()
 

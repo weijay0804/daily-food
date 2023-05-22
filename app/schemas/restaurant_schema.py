@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 17:08:09
 LastEditors: weijay
-LastEditTime: 2023-05-17 01:00:21
+LastEditTime: 2023-05-22 19:03:08
 Description: 定義 restaurant router 的數據模型
 '''
 
@@ -53,6 +53,12 @@ class CreateOrUpdateModel(__BaseModel):
     """新增一筆簪聽資料時的 schemas model"""
 
     pass
+
+
+class UpdateModel(BaseModel):
+    name: Union[str, None] = None
+    address: Union[str, None] = None
+    phone: Union[str, None] = None
 
 
 class OpenTimeBaseModel(BaseModel):
