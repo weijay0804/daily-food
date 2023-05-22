@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-05-18 01:23:35
+LastEditTime: 2023-05-22 20:15:36
 Description: Api Router 單元測試
 '''
 
@@ -115,15 +115,7 @@ class TestResaurantRotuer(InitialTestClient):
 
         response = self.client.delete(f"/api/v1/restaurant/{restaurant.id}")
 
-        # HACK 這邊應該不用再去資料庫裡面查詢
-        # HACK 因為這個 delete 的功能在 crud 那邊已經測試過
-        with self.fake_database.get_db() as db:
-            deleted_restaurant = (
-                db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
-            )
-
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(deleted_restaurant)
 
     def test_read_retaurant_randomly_router(self):
         inner_fake_data1 = FakeData.fake_restaurant()
