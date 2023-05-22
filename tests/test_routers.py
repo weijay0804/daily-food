@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-05-22 20:15:36
+LastEditTime: 2023-05-22 20:23:23
 Description: Api Router 單元測試
 '''
 
@@ -95,7 +95,6 @@ class TestResaurantRotuer(InitialTestClient):
             f"/api/v1/restaurant/{restaurant.id}",
             json={
                 "name": "測試餐廳更新",
-                "address": restaurant.address,
             },
         )
 

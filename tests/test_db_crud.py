@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-05-16 14:52:05
+LastEditTime: 2023-05-22 20:20:54
 Description: DataBase CRUD 單元測試
 '''
 
@@ -79,9 +79,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         with self.fake_database.get_db() as db:
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
-            update_data = database_schema.RestaurantDBModel(
-                name="測試2更新", address=restaurant.address, lat=restaurant.lat, lng=restaurant.lng
-            )
+            update_data = database_schema.RestaurantUpdateDBModel(name="測試2更新")
 
             updated_restaurant = crud.update_restaurant(db, restaurant.id, update_data)
 
@@ -234,10 +232,8 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
             self.assertEqual(open_time_obj[0].day_of_week, fake_open_time["day_of_week"])
             self.assertEqual(open_time_obj[0].update_at, None)
 
-            update_data = database_schema.RestaurantOpenTimeDBModel(
+            update_data = database_schema.RestaurantOpenTimeUpdateDBModel(
                 day_of_week=5,
-                open_time=open_time_obj[0].open_time,
-                close_time=open_time_obj[0].close_time,
             )
 
             crud.update_restaurant_open_time(db, open_time_obj[0].id, update_data)
