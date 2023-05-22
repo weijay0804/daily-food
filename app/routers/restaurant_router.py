@@ -2,19 +2,21 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-22 19:14:04
+LastEditTime: 2023-05-22 19:48:09
 Description: 餐廳路由
 '''
 
 from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.schemas import restaurant_schema, database_schema
 from app.database import SessionLocal
 from app.database import crud
 from app.utils import MapApi
+from app.error_handle import ErrorHandler
+
 
 router = APIRouter(prefix="/restaurant")
 
@@ -49,9 +51,8 @@ def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session 
     full_item = database_schema.RestaurantDBModel(**items.dict(), lat=lat, lng=lng)
 
     if not (lat and lng):
-        raise HTTPException(
-            status_code=400,
-            detail=f"The address '{items.address}' format is incorrect and cannot be processed correctly",
+        ErrorHandler.raise_400(
+            f"The address '{items.address}' format is incorrect and cannot be processed correctly."
         )
 
     crud.create_restaurant(db, full_item)
@@ -70,10 +71,7 @@ def update_restaurant(
     )
 
     if not updated_restaurant:
-        raise HTTPException(
-            status_code=404,
-            detail=f"The restaurant ID: {restaurant_id} is not founded in database.",
-        )
+        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
     return updated_restaurant
 
@@ -85,10 +83,7 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     deleted_restaurant = crud.delete_restaurant(db, restaurant_id)
 
     if not deleted_restaurant:
-        raise HTTPException(
-            status_code=404,
-            detail=f"The restaurant ID: {restaurant_id} is not founded in database.",
-        )
+        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
 
@@ -135,9 +130,7 @@ def update_restauarnt_open_time(
     updated_open_time = crud.update_restaurant_open_time(db, open_time_id, db_update_obj)
 
     if not updated_open_time:
-        raise HTTPException(
-            status_code=404, detail=f"The open time ID: {open_time_id} is not founded in database."
-        )
+        ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founded in database.")
 
     return restaurant_schema.OpenTimeModel(**updated_open_time.to_dict())
 
@@ -149,9 +142,7 @@ def delete_restaurant_open_time(
     deleted_open_time = crud.delete_restaurant_open_time(db, open_time_id)
 
     if not deleted_open_time:
-        raise HTTPException(
-            status_code=404, detail=f"The open time ID: {open_time_id} is not founed in database."
-        )
+        ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founed in database.")
 
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
