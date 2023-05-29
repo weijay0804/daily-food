@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-05-22 19:52:19
+LastEditTime: 2023-05-26 03:38:57
 Description: 餐廳路由
 '''
 
@@ -154,11 +154,18 @@ def read_restaurant_randomly(
     lat: float = Query(default=..., description="所在位置的緯度值"),
     lng: float = Query(default=..., description="所在位置的經度值"),
     distance: float = Query(default=..., description="要查詢多少距離範圍內 (km)"),
+    day_of_week: Union[int, None] = Query(default=None, description="星期幾"),
+    current_time: Union[str, None] = Query(default=None, description="目前時間 (HH:MM) 24H"),
     limit: Union[int, None] = Query(default=1, ge=1, le=10, description="一次回傳的最大的餐廳數量"),
     db: Session = Depends(get_db),
 ):
     """隨機取得範圍內的餐廳ㄧ"""
 
-    random_restaurants = crud.get_restaurant_randomly(db, lat, lng, distance, limit)
+    if day_of_week and current_time:
+        random_restaurants = crud.get_restaurant_randomly_with_open_time(
+            db, lat, lng, distance, day_of_week, current_time, limit
+        )
+    else:
+        random_restaurants = crud.get_restaurant_randomly(db, lat, lng, distance, limit)
 
     return restaurant_schema.ReadsModel(items=random_restaurants)
