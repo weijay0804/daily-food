@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-05-22 19:08:49
+LastEditTime: 2023-05-26 03:47:24
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -159,7 +159,13 @@ def delete_restaurant(db: Session, restaurant_id: int):
     return restaurant
 
 
-def get_restaurant_randomly(db: Session, lat: float, lng: float, distance: float, limit: int):
+def get_restaurant_randomly(
+    db: Session,
+    lat: float,
+    lng: float,
+    distance: float,
+    limit: int,
+):
     """隨機取得距離內的餐廳
 
     Args:
@@ -189,6 +195,58 @@ def get_restaurant_randomly(db: Session, lat: float, lng: float, distance: float
         db.query(model.Restaurant)
         .filter(text(sql_text))
         .params(lat=lat, lng=lng, distance=distance)
+        .order_by(func.random())
+        .limit(limit)
+        .all()
+    )
+
+    return items
+
+
+def get_restaurant_randomly_with_open_time(
+    db: Session,
+    lat: float,
+    lng: float,
+    distance: float,
+    day_of_week: int,
+    current_time: str,
+    limit: int,
+):
+    """隨機取得距離內的營業中餐廳
+
+    Args:
+        db (Session): sessionmaker 實例
+        lat (float): 所在位置緯度
+        lng (float): 所在位置經度
+        distance (float): 多少距離範圍內 (km)
+        day_of_week (int): 星期幾
+        current_time (str): 目前時間 (HH:MM) 24H
+        limit (int): 回傳的餐廳數量
+    """
+
+    sql_text = """
+    (
+        6371 * 2 * ASIN(
+            SQRT(
+                POWER(SIN((:lat - ABS(lat)) * PI() / 180 / 2), 2)
+                + COS(:lat * PI() / 180)
+                * COS(ABS(lat) * PI() / 180)
+                * POWER(SIN((:lng - lng) * PI() / 180 / 2), 2)
+            )
+        )
+    ) <= :distance
+    AND :day_of_week = restaurant_open_time.day_of_week
+    AND TIME(:current_time) >= TIME(restaurant_open_time.open_time)
+    AND TIME(:current_time) <= TIME(restaurant_open_time.close_time)
+    """
+
+    items = (
+        db.query(model.Restaurant)
+        .join(model.RestaurantOpenTime)
+        .filter(text(sql_text))
+        .params(
+            lat=lat, lng=lng, distance=distance, day_of_week=day_of_week, current_time=current_time
+        )
         .order_by(func.random())
         .limit(limit)
         .all()
