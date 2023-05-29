@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-05-22 20:23:23
+LastEditTime: 2023-05-29 23:22:46
 Description: Api Router 單元測試
 '''
 
@@ -152,6 +152,51 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['items']), 2)
+
+    def test_read_retaurant_randomly_router_with_open_time(self):
+        fake_data1 = FakeData.fake_restaurant()
+        fake_data2 = FakeData.fake_restaurant()
+
+        while fake_data1["name"] == fake_data2["name"]:
+            fake_data2 = FakeData.fake_restaurant()
+
+        fake_open_time1 = FakeData.fake_restaurant_open_time()
+        fake_open_time2 = FakeData.fake_restaurant_open_time()
+
+        while fake_open_time1["day_of_week"] == fake_open_time2["day_of_week"]:
+            fake_open_time2 = FakeData.fake_restaurant_open_time()
+
+        restaurant1 = Restaurant(**fake_data1)
+        restaurant2 = Restaurant(**fake_data2)
+
+        with self.fake_database.get_db() as db:
+            db.add_all([restaurant1, restaurant2])
+            db.commit()
+            db.refresh(restaurant1)
+            db.refresh(restaurant2)
+
+        open_time1 = RestaurantOpenTime(**fake_open_time1, restaurant_id=restaurant1.id)
+        open_time2 = RestaurantOpenTime(**fake_open_time2, restaurant_id=restaurant2.id)
+
+        with self.fake_database.get_db() as db:
+            db.add_all([open_time1, open_time2])
+            db.commit()
+
+            db.refresh(open_time1)
+            db.refresh(open_time2)
+
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
+        day_of_week = open_time1.day_of_week
+        current_time = open_time1.open_time.strftime("%H:%M")
+
+        response = self.client.get(
+            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["items"]), 1)
+        self.assertEqual(response.json()["items"][0]["name"], restaurant1.name)
 
 
 class TestRestaurantOpenTimeRouter(InitialTestClient):
