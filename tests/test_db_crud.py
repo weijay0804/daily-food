@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-05-22 20:20:54
+LastEditTime: 2023-05-26 12:59:17
 Description: DataBase CRUD 單元測試
 '''
 
@@ -138,6 +138,59 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertIsNotNone(random_restaurant)
         self.assertEqual(random_restaurant[0].name, fake_inner_data["name"])
         self.assertEqual(len(random_restaurant), 1)
+
+    def test_get_restaurant_randomly_with_open_time_function(self):
+        fake_inner_data1 = FakeData.fake_restaurant()
+        fake_inner_data2 = FakeData.fake_restaurant()
+
+        while fake_inner_data1["name"] == fake_inner_data2["name"]:
+            fake_inner_data2 = FakeData.fake_restaurant()
+
+        inner_restaurant1 = Restaurant(**fake_inner_data1)
+        inner_restauarnt2 = Restaurant(**fake_inner_data2)
+
+        with self.fake_database.get_db() as db:
+            db.add_all([inner_restaurant1, inner_restauarnt2])
+            db.commit()
+            db.refresh(inner_restaurant1)
+            db.refresh(inner_restauarnt2)
+
+        open_time1 = FakeData.fake_restaurant_open_time()
+        open_time2 = FakeData.fake_restaurant_open_time()
+
+        while open_time1["day_of_week"] == open_time2["day_of_week"]:
+            open_time2 = FakeData.fake_restaurant_open_time()
+
+        with self.fake_database.get_db() as db:
+            db.add_all(
+                [
+                    RestaurantOpenTime(**open_time1, restaurant_id=inner_restaurant1.id),
+                    RestaurantOpenTime(**open_time2, restaurant_id=inner_restauarnt2.id),
+                ]
+            )
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            lat, lng = FakeData.fake_current_location()
+            random_restaurant = crud.get_restaurant_randomly_with_open_time(
+                db,
+                lat,
+                lng,
+                5.0,
+                open_time1["day_of_week"],
+                open_time1["open_time"].strftime("%H:%M"),
+                1,
+            )
+
+            self.assertEqual(len(random_restaurant), 1)
+            self.assertEqual(len(random_restaurant[0].open_times), 1)
+            self.assertEqual(
+                random_restaurant[0].open_times[0].day_of_week, open_time1["day_of_week"]
+            )
+            self.assertEqual(random_restaurant[0].open_times[0].open_time, open_time1["open_time"])
+            self.assertEqual(
+                random_restaurant[0].open_times[0].close_time, open_time1["close_time"]
+            )
 
 
 class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
