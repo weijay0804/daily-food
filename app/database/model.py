@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: weijay
-LastEditTime: 2023-05-15 22:38:47
+LastEditTime: 2023-06-01 23:12:56
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -26,7 +26,12 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+# TODO restaurant_type_intermediary table
 
+# TODO user_restaurant_intermediary table
+
+
+# TODO restaurant table
 class Restaurant(Base):
     __tablename__ = "restaurant"
 
@@ -64,6 +69,7 @@ class Restaurant(Base):
         return f"Data in restaurant table, name = {self.name}"
 
 
+# TODO restaurant_open_time table
 class RestaurantOpenTime(Base):
     __tablename__ = "restaurant_open_time"
 
@@ -97,3 +103,18 @@ class RestaurantOpenTime(Base):
             "open_time": self.open_time,
             "close_time": self.close_time,
         }
+
+
+# TODO restaurant_type table
+class RestaurantType(Base):
+    __tablename__ = "restaurant_type"
+
+
+# TODO user table
+class User(Base):
+    __tablename__ = "user"
+
+
+# TODO oauth table
+class OAuth(Base):
+    __tablename__ = "oauth"
