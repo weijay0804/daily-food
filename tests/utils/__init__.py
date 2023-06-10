@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-25 17:19:24
-LastEditors: weijay
-LastEditTime: 2023-05-12 17:04:07
+LastEditors: andy
+LastEditTime: 2023-06-09 19:11:43
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -98,6 +98,38 @@ class FakeData:
             close_time = close_time.strftime("%H:%M")
 
         return {"day_of_week": day_of_week, "open_time": open_time, "close_time": close_time}
+
+    def fake_restaurant_type():
+        """生成假餐廳種類資料"""
+
+        name = random.choice(_fake_data.FakeRestaurantType.NAME)
+        desc = random.choice(_fake_data.FakeRestaurantType.DESC)
+
+        return {"name": name, "desc": desc}
+
+    def fake_user(is_oauth: bool = False):
+        data = {}
+
+        username = random.choice(_fake_data.FakeUser.USERNAME)
+        email = random.choice(_fake_data.FakeUser.EMAIL)
+
+        if not is_oauth:
+            password_hash = random.choice(_fake_data.FakeUser.PASSWORD_HASH)
+
+            data.update({"password_hash": password_hash})
+
+        else:
+            data.update({"is_oauth": True})
+
+        data.update({"username": username, "email": email})
+
+        return data
+
+    def fake_oauth():
+        provider = random.choice(_fake_data.FakeOAuth.PROVIDER)
+        access_token = random.choice(_fake_data.FakeOAuth.ACCESS_TOKEN)
+
+        return {"provider": provider, "access_token": access_token}
 
 
 class FakeDataBase:

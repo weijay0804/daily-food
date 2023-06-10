@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-27 14:59:26
 LastEditors: weijay
-LastEditTime: 2023-05-11 21:44:04
+LastEditTime: 2023-06-04 21:30:38
 Description: 測試資料
 '''
 
@@ -52,3 +52,20 @@ class FakeRestaurantOpenTimeData:
 
     OPEN_TIME = [time(hour=12, minute=0), time(hour=9, minute=30), time(hour=15, minute=0)]
     CLOSE_TIME = [time(hour=20, minute=30), time(hour=21, minute=0), time(hour=22, minute=0)]
+
+
+class FakeRestaurantType:
+    NAME = ["中式", "美式", "義大利麵", "素食", "炸雞"]
+
+    DESC = ["好好吃", "家的味道", "吃了會露出笑容", "開始養生吧"]
+
+
+class FakeUser:
+    USERNAME = ["user1", "user2", "user3", "user4"]
+    EMAIL = ["user1@test.com", "user2@test.com", "user3@test.com", "user4@test.com"]
+    PASSWORD_HASH = ["user1_hash", "user2_hash", "user3_hash", "user4_hash"]
+
+
+class FakeOAuth:
+    PROVIDER = ["google", "github", "facebook", "twitter"]
+    ACCESS_TOKEN = ["token1", "token2", "token3", "token4"]
