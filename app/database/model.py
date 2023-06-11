@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 20:34:28
-LastEditors: weijay
-LastEditTime: 2023-06-03 23:20:32
+LastEditors: andy
+LastEditTime: 2023-06-10 13:54:20
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -93,12 +93,16 @@ class Restaurant(Base):
         lat: float,
         lng: float,
         phone: Union[str, None] = None,
+        desc: Union[str, None] = None,
+        price: Union[int, None] = None,
     ):
         self.name = name
         self.address = address
         self.phone = phone
         self.lat = lat
         self.lng = lng
+        self.desc = desc
+        self.price = price
 
     def __repr__(self):
         return f"Data in restaurant table, name = {self.name}"
@@ -125,13 +129,10 @@ class RestaurantOpenTime(Base):
         Index('idx_restaurant_id', 'restaurant_id'),
     )
 
-    def __init__(
-        self, day_of_week: int, open_time: time, close_time: time, restaurant: "Restaurant"
-    ):
+    def __init__(self, day_of_week: int, open_time: time, close_time: time):
         self.day_of_week = day_of_week
         self.open_time = time(hour=open_time.hour, minute=open_time.minute)
         self.close_time = time(hour=close_time.hour, minute=close_time.minute)
-        self.restaurant = restaurant
 
     def to_dict(self):
         """把 ORM object 轉換成 dict"""
