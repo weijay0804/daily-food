@@ -2,18 +2,16 @@
 
 - [跟 Restaurant 相關操作的 Router Schemas](#跟-restaurant-相關操作的-router-schemas)
   - [Restaurants](#restaurants)
-    - [Read](#read)
-    - [Create](#create)
+    - [`Read`](#read)
+    - [`Create`](#create)
   - [Restaurant](#restaurant)
-    - [Read](#read-1)
-    - [Update](#update)
-    - [Delete](#delete)
-  - [Restaurant Open Times](#restaurant-open-times)
-    - [Read](#read-2)
-    - [Create](#create-1)
+    - [`Read`](#read-1)
+    - [`Update`](#update)
+    - [`Delete`](#delete)
   - [Restaurant Open Time](#restaurant-open-time)
-    - [Update](#update-1)
-    - [Delete](#delete-1)
+    - [`Update`](#update-1)
+    - [`Delete`](#delete-1)
+  - [None](#none)
 
 
 ---
@@ -25,7 +23,7 @@
 
 ---
 
-### Read
+### `Read`
 
 > (GET) 取得多筆餐廳資料
 
@@ -45,6 +43,7 @@ Return
             "phone" : "0228472392",
             "lat" : 23.00123,
             "lng" : 120.2314,
+            "price" : "中",
             "is_open" : true
         },
         {
@@ -52,6 +51,7 @@ Return
             "name" : "麥當勞",
             "address" : "台北市信義區松仁路二段",
             "phone" : "022844313",
+            "price" : "低",
             "lat" : 23.00123,
             "lng" : 120.2314,
             "is_open" : false
@@ -62,7 +62,7 @@ Return
 
 ---
 
-### Create
+### `Create`
 
 > (POST) 新增一筆餐廳資料
 
@@ -73,7 +73,20 @@ Send
     "name" : "鼎泰豐",
     "address" : "台北市信義區松高路一段",
     "phone" : "0228472392",
-
+    "desc" : "好吃的小籠包",
+    "price" : -1,
+    "b_hours" : [
+        {
+            "day_of_week" : 1,
+            "open_time" : "12:00",
+            "close_time" : "20:00"
+        },
+        {
+            "day_of_week" : 2,
+            "open_time" : "12:00",
+            "close_time" : "20:00"
+        }
+    ]
 }
 ```
 
@@ -86,7 +99,7 @@ Send
 
 ---
 
-### Read
+### `Read`
 
 > (GET) 取得 *`restaurant_id`* 餐廳資料
 
@@ -97,14 +110,32 @@ Return
     "id" : 1,
     "name" : "鼎泰豐",
     "address" : "台北市信義區松高路一段",
-    "phone" : "02254134"
+    "phone" : "02254134",
+    "lat" : 23.001,
+    "lng" : 120.001,
+    "desc" : "好吃的小籠包",
+    "price" : 0,
+    "b_hours" : [
+        {
+            "id" : 1,
+            "day_of_week" : 1,
+            "open_time" : "12:00",
+            "close_time" : "20:00"
+        },
+        {
+            "id" : 3,
+            "day_of_week" : 3,
+            "open_time" : "12:00",
+            "close_time" : "20:00"
+        }
+    ]
     
 }
 ```
 
 ---
 
-### Update
+### `Update`
 
 > (PATCH) 更新 *`restaurant_id`* 餐廳資料
 
@@ -114,81 +145,29 @@ Send
 {
     "name" : "更新資料",
     "adderss" : "更新資料",
-    "phone" : "更新資料"
+    "phone" : "更新資料",
+    "desc" : "更新資料",
+    "price" : "更新資料"
 }
 ```
 
 ---
 
-### Delete
+### `Delete`
 
 > (DELETE) 刪除 *`restaurant_id`* 餐廳資料
 
 None
 
 ---
-## Restaurant Open Times 
-( `/restaurant/[restauratn_id]/open_time` )
-> 餐廳營業時間路由
-
----
-
-### Read
-
-> (GET) 取得 *`restaurant_id`* 餐廳的所有營業時間資料
-
-Return
-```json
-{
-    "items" : [
-        {
-            "id" : 1,
-            "day_of_week" : 1,
-            "open_time" : "12:00",
-            "close_time" : "21:00"
-        },
-        {
-            "id" : 2,
-            "day_of_week" : 3,
-            "open_time" : "12:00",
-            "close_time" : "21:00"
-        }
-    ]
-}
-```
-
----
-
-### Create
-
-> 新增一筆 *`restaurant_id`* 的營業時間資料
-
-Send
-```json
-{
-    "items" : [
-        {
-            "day_of_week" : 1,
-            "open_time" : "12:00",
-            "close_time" : "21:00"
-        },
-        {
-            "day_of_week" : 2,
-            "open_time" : "12:00",
-            "close_time" : "21:00"
-        }
-    ]
-}
-```
-
 ---
 ## Restaurant Open Time 
-( `/restaurant/[restaurant_id]/open_time/[open_time_id]` )
 > 單一餐廳營業時間路由
+( `/restaurant/[restaurant_id]/open_time/[open_time_id]` )
 
 ---
 
-### Update
+### `Update`
 
 > (PATCH) 更新 *`open_time_id`* 營業時間資料
 
@@ -204,10 +183,9 @@ Send
 
 ---
 
-### Delete
+### `Delete`
 
 > (DELETE) 刪除 *`open_time_id`* 營業時間的資料
 
 None
-
 ---
