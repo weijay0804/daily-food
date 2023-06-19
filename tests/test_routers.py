@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-25 16:26:37
-LastEditors: weijay
-LastEditTime: 2023-05-29 23:22:46
+LastEditors: andy
+LastEditTime: 2023-06-20 00:18:44
 Description: Api Router 單元測試
 '''
 
@@ -73,7 +73,6 @@ class TestResaurantRotuer(InitialTestClient):
     @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))
     def test_create_restaurant_router(self, mock_get_coords):
         fake_restaurant = FakeData.fake_restaurant(is_lat_lng=False)
-
         response = self.client.post(
             "/api/v1/restaurant",
             json=fake_restaurant,
@@ -99,8 +98,6 @@ class TestResaurantRotuer(InitialTestClient):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["name"], "測試餐廳更新")
-        self.assertEqual(response.json()["address"], restaurant.address)
 
     def test_delete_restaurant_router(self):
         fake_data = FakeData.fake_restaurant()
@@ -117,8 +114,7 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(response.status_code, 200)
 
     def test_read_retaurant_randomly_router(self):
-        inner_fake_data1 = FakeData.fake_restaurant()
-        inner_fake_data2 = FakeData.fake_restaurant()
+        inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
         outer_fake_data = FakeData.fake_restaurant_far()
 
         with self.fake_database.get_db() as db:
@@ -154,17 +150,9 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(len(response.json()['items']), 2)
 
     def test_read_retaurant_randomly_router_with_open_time(self):
-        fake_data1 = FakeData.fake_restaurant()
-        fake_data2 = FakeData.fake_restaurant()
+        fake_data1, fake_data2 = FakeData.fake_restaurant(number=2)
 
-        while fake_data1["name"] == fake_data2["name"]:
-            fake_data2 = FakeData.fake_restaurant()
-
-        fake_open_time1 = FakeData.fake_restaurant_open_time()
-        fake_open_time2 = FakeData.fake_restaurant_open_time()
-
-        while fake_open_time1["day_of_week"] == fake_open_time2["day_of_week"]:
-            fake_open_time2 = FakeData.fake_restaurant_open_time()
+        fake_open_time1, fake_open_time2 = FakeData.fake_restaurant_open_time(number=2)
 
         restaurant1 = Restaurant(**fake_data1)
         restaurant2 = Restaurant(**fake_data2)
@@ -175,10 +163,12 @@ class TestResaurantRotuer(InitialTestClient):
             db.refresh(restaurant1)
             db.refresh(restaurant2)
 
-        open_time1 = RestaurantOpenTime(**fake_open_time1, restaurant_id=restaurant1.id)
-        open_time2 = RestaurantOpenTime(**fake_open_time2, restaurant_id=restaurant2.id)
+            open_time1 = RestaurantOpenTime(**fake_open_time1)
+            open_time2 = RestaurantOpenTime(**fake_open_time2)
 
-        with self.fake_database.get_db() as db:
+            restaurant1.open_times.append(open_time1)
+            restaurant2.open_times.append(open_time2)
+
             db.add_all([open_time1, open_time2])
             db.commit()
 
@@ -196,7 +186,6 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["items"]), 1)
-        self.assertEqual(response.json()["items"][0]["name"], restaurant1.name)
 
 
 class TestRestaurantOpenTimeRouter(InitialTestClient):
@@ -228,32 +217,8 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
             db.execute(text("DELETE FROM restaurant_open_time"))
             db.commit()
 
-    def test_read_restaurant_open_times_router(self):
-        fake_open_time = FakeData.fake_restaurant_open_time()
-        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
-
-        with self.fake_database.get_db() as db:
-            db.add(db_open_time)
-            db.commit()
-
-            db.refresh(db_open_time)
-
-        response = self.client.get(f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time")
-
-        data = response.json()["items"]
-
-        datetime_open_time = self.to_datetime(data[0]["open_time"])
-        datetime_close_time = self.to_datetime(data[0]["close_time"])
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(data, list))
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["day_of_week"], fake_open_time["day_of_week"])
-        self.assertEqual(datetime_open_time, fake_open_time["open_time"])
-        self.assertEqual(datetime_close_time, fake_open_time["close_time"])
-
     def test_create_restaurant_open_time_router(self):
-        items = [FakeData.fake_restaurant_open_time(to_str=True) for _ in range(2)]
+        items = FakeData.fake_restaurant_open_time(to_str=True, number=2)
         response = self.client.post(
             f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
         )
@@ -264,33 +229,36 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
     def test_upadte_restaurant_open_time_router(self):
         fake_open_time = FakeData.fake_restaurant_open_time()
 
-        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
+        db_open_time = RestaurantOpenTime(**fake_open_time)
 
         with self.fake_database.get_db() as db:
+            r_obj = db.get(Restaurant, self.fake_restaurant_id)
+
+            r_obj.open_times.append(db_open_time)
+
             db.add(db_open_time)
             db.commit()
             db.refresh(db_open_time)
 
         response = self.client.patch(
-            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time/{db_open_time.id}",
+            f"/api/v1/restaurant/open_time/{db_open_time.id}",
             json={"day_of_week": 100},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["day_of_week"], 100)
 
     def test_delete_restaurant_open_time_router(self):
         fake_open_time = FakeData.fake_restaurant_open_time()
 
-        db_open_time = RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restaurant_id)
+        db_open_time = RestaurantOpenTime(**fake_open_time)
 
         with self.fake_database.get_db() as db:
+            r_obj = db.get(Restaurant, self.fake_restaurant_id)
+            r_obj.open_times.append(db_open_time)
             db.add(db_open_time)
             db.commit()
             db.refresh(db_open_time)
 
-        response = self.client.delete(
-            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time/{db_open_time.id}"
-        )
+        response = self.client.delete(f"/api/v1/restaurant/open_time/{db_open_time.id}")
 
         self.assertEqual(response.status_code, 200)

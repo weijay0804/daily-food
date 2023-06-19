@@ -1,11 +1,12 @@
 '''
 Author: weijay
 Date: 2023-04-24 15:58:18
-LastEditors: weijay
-LastEditTime: 2023-05-26 03:38:57
+LastEditors: andy
+LastEditTime: 2023-06-20 00:09:57
 Description: 餐廳路由
 '''
 
+from datetime import datetime
 from typing import Union
 
 from fastapi import APIRouter, Depends, Query
@@ -31,19 +32,28 @@ def get_db():
         db.close()
 
 
-@router.get("/", response_model=restaurant_schema.ReadsModel)
+@router.get("/", response_model=restaurant_schema.OnReadsModel)
 def read_restaurants(db: Session = Depends(get_db)):
     """取得所有餐廳"""
 
     items = crud.get_restaurants(db)
 
-    return restaurant_schema.ReadsModel(items=items)
+    return restaurant_schema.OnReadsModel(items=items)
 
 
-# 這裡改成分開傳送資料比較好 open_time
 @router.post("/", status_code=201)
-def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session = Depends(get_db)):
+def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depends(get_db)):
     """新增餐廳"""
+
+    # 檢查傳入的 open_time 中的 time 格式
+    if items.open_times is not None:
+        for open_time in items.open_times:
+            try:
+                datetime.strptime(open_time.open_time, "%H:%M").time()
+                datetime.strptime(open_time.close_time, "%H:%M").time()
+
+            except ValueError:
+                ErrorHandler.raise_400("time format error, it should be %H:%M format.")
 
     # 使用第三方 Api 取得經緯度
     lat, lng = MapApi().get_coords(items.address)
@@ -55,14 +65,28 @@ def create_restaurant(items: restaurant_schema.CreateOrUpdateModel, db: Session 
             f"The address '{items.address}' format is incorrect and cannot be processed correctly."
         )
 
-    crud.create_restaurant(db, full_item)
+    r = crud.create_restaurant(db, full_item)
+
+    if items.open_times is not None:
+        db_open_times = []
+
+        for open_time_obj in items.open_times:
+            db_open_times.append(
+                database_schema.RestaurantOpenTimeDBModel(
+                    day_of_week=open_time_obj.day_of_week,
+                    close_time=datetime.strptime(open_time_obj.close_time, "%H:%M").time(),
+                    open_time=datetime.strptime(open_time_obj.open_time, "%H:%M").time(),
+                )
+            )
+
+        crud.create_restaurant_open_times(db, r.id, db_open_times)
 
     return {"message": "created."}
 
 
-@router.patch("/{restaurant_id}", response_model=restaurant_schema.ReadModel)
+@router.patch("/{restaurant_id}", status_code=200)
 def update_restaurant(
-    restaurant_id: str, item: restaurant_schema.UpdateModel, db: Session = Depends(get_db)
+    restaurant_id: str, item: restaurant_schema.OnUpdateModel, db: Session = Depends(get_db)
 ):
     """更新餐廳"""
 
@@ -73,7 +97,7 @@ def update_restaurant(
     if not updated_restaurant:
         ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
-    return updated_restaurant
+    return {"message": "updated."}
 
 
 @router.delete("/{restaurant_id}", status_code=200)
@@ -88,25 +112,10 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
 
 
-@router.get("/{restaurant_id}/open_time", response_model=restaurant_schema.ReadsOpenTimeModel)
-def read_restaurant_open_times(restaurant_id: int, db: Session = Depends(get_db)):
-    db_itmes = crud.get_restaurant_open_times(db, restaurant_id)
-
-    items = []
-
-    if db_itmes is None:
-        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
-
-    for i in db_itmes:
-        items.append(restaurant_schema.OpenTimeModel(**(i.to_dict())))
-
-    return restaurant_schema.ReadsOpenTimeModel(items=items)
-
-
 @router.post("/{restaurant_id}/open_time", status_code=201)
-def create_restaurnt_open_tim(
+def create_restaurnt_open_time(
     restaurant_id: int,
-    open_times: restaurant_schema.CreateOpenTimeModel,
+    open_times: restaurant_schema.OnCreateOpenTimeModel,
     db: Session = Depends(get_db),
 ):
     open_times_obj = [
@@ -120,12 +129,12 @@ def create_restaurnt_open_tim(
 
 
 @router.patch(
-    "/{restaurant_id}/open_time/{open_time_id}", response_model=restaurant_schema.OpenTimeModel
+    "/open_time/{open_time_id}",
+    status_code=200,
 )
 def update_restauarnt_open_time(
-    restaurant_id: int,
     open_time_id: int,
-    item: restaurant_schema.UpdateOpenTimeModel,
+    item: restaurant_schema.OnUpadteOpenTimeModel,
     db: Session = Depends(get_db),
 ):
     db_update_obj = database_schema.RestaurantOpenTimeUpdateDBModel(**item.dict(exclude_unset=True))
@@ -134,13 +143,11 @@ def update_restauarnt_open_time(
     if not updated_open_time:
         ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founded in database.")
 
-    return restaurant_schema.OpenTimeModel(**updated_open_time.to_dict())
+    return {"message": "updated."}
 
 
-@router.delete("/{restaurant_id}/open_time/{open_time_id}", status_code=200)
-def delete_restaurant_open_time(
-    restaurant_id: int, open_time_id: int, db: Session = Depends(get_db)
-):
+@router.delete("/open_time/{open_time_id}", status_code=200)
+def delete_restaurant_open_time(open_time_id: int, db: Session = Depends(get_db)):
     deleted_open_time = crud.delete_restaurant_open_time(db, open_time_id)
 
     if not deleted_open_time:
@@ -149,7 +156,7 @@ def delete_restaurant_open_time(
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
 
-@router.get("/choice", response_model=restaurant_schema.ReadsModel)
+@router.get("/choice", response_model=restaurant_schema.OnReadsModel)
 def read_restaurant_randomly(
     lat: float = Query(default=..., description="所在位置的緯度值"),
     lng: float = Query(default=..., description="所在位置的經度值"),
@@ -168,4 +175,4 @@ def read_restaurant_randomly(
     else:
         random_restaurants = crud.get_restaurant_randomly(db, lat, lng, distance, limit)
 
-    return restaurant_schema.ReadsModel(items=random_restaurants)
+    return restaurant_schema.OnReadsModel(items=random_restaurants)

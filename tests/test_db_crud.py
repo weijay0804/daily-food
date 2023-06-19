@@ -1,13 +1,14 @@
 '''
 Author: weijay
 Date: 2023-05-15 22:05:37
-LastEditors: weijay
-LastEditTime: 2023-05-26 12:59:17
+LastEditors: andy
+LastEditTime: 2023-06-20 00:18:29
 Description: DataBase CRUD 單元測試
 '''
 
 import os
 import unittest
+import datetime
 
 from sqlalchemy import text
 
@@ -34,33 +35,50 @@ class InitialDataBaseTest(unittest.TestCase):
 
 
 class TestRestaurantCURD(InitialDataBaseTest):
+    def _get_restaurant_obj(self, db) -> "Restaurant":
+        r_obj = (
+            db.query(Restaurant)
+            .filter(Restaurant.name == self._fake_restaurant_data["name"])
+            .first()
+        )
+
+        return r_obj
+
+    def setUp(self) -> None:
+        """先新增資料進去"""
+
+        # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
+        self._fake_restaurant_data = {
+            "name": "test_restaurant",
+            "address": "test_address",
+            "lat": 23.001,
+            "lng": 120.001,
+        }
+
+        fake_restaurant = Restaurant(**self._fake_restaurant_data)
+
+        with self.fake_database.get_db() as db:
+            db.add(fake_restaurant)
+            db.commit()
+
     def tearDown(self) -> None:
         with self.fake_database.get_db() as db:
             db.execute(text("DELETE FROM restaurant"))
             db.commit()
 
     def test_get_restaurants_function(self):
-        fake_data = []
-
-        for _ in range(2):
-            data = FakeData.fake_restaurant()
-            fake_data.append(Restaurant(**data))
-
-        with self.fake_database.get_db() as db:
-            db.add_all(fake_data)
-            db.commit()
-            db.close()
-
         with self.fake_database.get_db() as db:
             restaurants = crud.get_restaurants(db)
 
+            fake_restaurant = self._get_restaurant_obj(db)
+
         self.assertTrue(isinstance(restaurants, list))
-        self.assertTrue(isinstance(restaurants[0], Restaurant))
+        self.assertEqual(restaurants[0].name, fake_restaurant.name)
 
     def test_create_restaurant_function(self):
         fake_data = FakeData.fake_restaurant()
 
-        restaurant = database_schema.RestaurantDBModel(**fake_data, phone="0932212849")
+        restaurant = database_schema.RestaurantDBModel(**fake_data)
 
         with self.fake_database.get_db() as db:
             db_restaurant = crud.create_restaurant(db, restaurant)
@@ -140,11 +158,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(len(random_restaurant), 1)
 
     def test_get_restaurant_randomly_with_open_time_function(self):
-        fake_inner_data1 = FakeData.fake_restaurant()
-        fake_inner_data2 = FakeData.fake_restaurant()
-
-        while fake_inner_data1["name"] == fake_inner_data2["name"]:
-            fake_inner_data2 = FakeData.fake_restaurant()
+        fake_inner_data1, fake_inner_data2 = FakeData.fake_restaurant(number=2)
 
         inner_restaurant1 = Restaurant(**fake_inner_data1)
         inner_restauarnt2 = Restaurant(**fake_inner_data2)
@@ -155,19 +169,16 @@ class TestRestaurantCURD(InitialDataBaseTest):
             db.refresh(inner_restaurant1)
             db.refresh(inner_restauarnt2)
 
-        open_time1 = FakeData.fake_restaurant_open_time()
-        open_time2 = FakeData.fake_restaurant_open_time()
-
-        while open_time1["day_of_week"] == open_time2["day_of_week"]:
-            open_time2 = FakeData.fake_restaurant_open_time()
+        open_time1, open_time2 = FakeData.fake_restaurant_open_time(number=2)
 
         with self.fake_database.get_db() as db:
-            db.add_all(
-                [
-                    RestaurantOpenTime(**open_time1, restaurant_id=inner_restaurant1.id),
-                    RestaurantOpenTime(**open_time2, restaurant_id=inner_restauarnt2.id),
-                ]
-            )
+            db_open_time1 = RestaurantOpenTime(**open_time1)
+            db_open_time2 = RestaurantOpenTime(**open_time2)
+
+            inner_restaurant1.open_times.append(db_open_time1)
+            inner_restauarnt2.open_times.append(db_open_time2)
+
+            db.add_all([db_open_time1, db_open_time2])
             db.commit()
 
         with self.fake_database.get_db() as db:
@@ -194,137 +205,102 @@ class TestRestaurantCURD(InitialDataBaseTest):
 
 
 class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
+    def _get_restaurant_obj(self, db) -> "Restaurant":
+        r_obj = db.query(Restaurant).filter(Restaurant.name == self.fake_data["name"]).first()
+
+        return r_obj
+
+    def _get_open_time_obj(self, db):
+        open_time_obj = (
+            db.query(RestaurantOpenTime)
+            .filter(RestaurantOpenTime.day_of_week == self._fake_open_time_data["day_of_week"])
+            .first()
+        )
+
+        return open_time_obj
+
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        fake_data = FakeData.fake_restaurant()
+        cls.fake_data = FakeData.fake_restaurant()
 
         with cls.fake_database.get_db() as db:
-            restaurant = Restaurant(**fake_data)
+            restaurant = Restaurant(**cls.fake_data)
 
             db.add(restaurant)
 
             db.commit()
             db.refresh(restaurant)
 
-            cls.fake_restuarnt_id = restaurant.id
+    def setUp(self) -> None:
+        """先新增資料"""
+
+        self._fake_open_time_data = {
+            "day_of_week": 100,
+            "open_time": datetime.time(hour=8, minute=0),
+            "close_time": datetime.time(hour=22, minute=0),
+        }
+
+        with self.fake_database.get_db() as db:
+            r_obj = self._get_restaurant_obj(db)
+
+            db_open_time = RestaurantOpenTime(**self._fake_open_time_data)
+
+            r_obj.open_times.append(db_open_time)
+
+            db.add(db_open_time)
+            db.commit()
 
     def tearDown(self) -> None:
         with self.fake_database.get_db() as db:
             db.execute(text("DELETE FROM restaurant_open_time"))
             db.commit()
 
-    def test_get_restaurant_open_time_function(self):
-        from sqlalchemy.orm.collections import InstrumentedList
-
+    def test_create_restaurant_open_time_function(self):
         fake_open_time = FakeData.fake_restaurant_open_time()
 
         with self.fake_database.get_db() as db:
-            db.add(RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restuarnt_id))
-            db.commit()
+            r_obj = self._get_restaurant_obj(db)
 
-            open_times = crud.get_restaurant_open_times(db, self.fake_restuarnt_id)
-
-            self.assertTrue(isinstance(open_times, InstrumentedList))
-            self.assertEqual(open_times[0].day_of_week, fake_open_time["day_of_week"])
-            self.assertEqual(open_times[0].open_time, fake_open_time["open_time"])
-            self.assertEqual(open_times[0].close_time, fake_open_time["close_time"])
-            self.assertEqual(len(open_times), 1)
-
-    def test_create_restaurant_open_time_function(self):
-        fake_open_time1 = FakeData.fake_restaurant_open_time()
-        fake_open_time2 = FakeData.fake_restaurant_open_time()
-
-        with self.fake_database.get_db() as db:
             crud.create_restaurant_open_times(
                 db,
-                self.fake_restuarnt_id,
+                r_obj.id,
                 [
-                    database_schema.RestaurantOpenTimeDBModel(**fake_open_time1),
-                    database_schema.RestaurantOpenTimeDBModel(**fake_open_time2),
+                    database_schema.RestaurantOpenTimeDBModel(**fake_open_time),
                 ],
             )
 
-            open_times = (
-                db.query(Restaurant)
-                .filter(Restaurant.id == self.fake_restuarnt_id)
-                .first()
-                .open_times
-            )
+            open_times = db.get(Restaurant, r_obj.id).open_times
 
-            self.assertEqual(len(open_times), 2)
-            self.assertTrue(
-                open_times[0].day_of_week
-                in [fake_open_time1["day_of_week"], fake_open_time2["day_of_week"]]
-            )
-            self.assertTrue(
-                open_times[0].open_time
-                in [fake_open_time1["open_time"], fake_open_time2["open_time"]]
-            )
-            self.assertTrue(
-                open_times[0].close_time
-                in [fake_open_time1["close_time"], fake_open_time2["close_time"]]
-            )
+            self.assertIn(fake_open_time["day_of_week"], [i.day_of_week for i in open_times])
+            self.assertIn(fake_open_time["open_time"], [i.open_time for i in open_times])
+            self.assertIn(fake_open_time["close_time"], [i.close_time for i in open_times])
 
     def test_update_restaurant_open_time_function(self):
-        fake_open_time = FakeData.fake_restaurant_open_time()
-
         with self.fake_database.get_db() as db:
-            db.add(RestaurantOpenTime(**fake_open_time, restaurant_id=self.fake_restuarnt_id))
-            db.commit()
+            open_time_obj = self._get_open_time_obj(db)
 
-        with self.fake_database.get_db() as db:
-            open_time_obj = (
-                db.query(Restaurant)
-                .filter(Restaurant.id == self.fake_restuarnt_id)
-                .first()
-                .open_times
-            )
-
-            self.assertEqual(open_time_obj[0].day_of_week, fake_open_time["day_of_week"])
-            self.assertEqual(open_time_obj[0].update_at, None)
+            self.assertEqual(open_time_obj.update_at, None)
 
             update_data = database_schema.RestaurantOpenTimeUpdateDBModel(
                 day_of_week=5,
             )
 
-            crud.update_restaurant_open_time(db, open_time_obj[0].id, update_data)
+            crud.update_restaurant_open_time(db, open_time_obj.id, update_data)
 
-        with self.fake_database.get_db() as db:
-            update_open_time_obj = (
-                db.query(Restaurant)
-                .filter(Restaurant.id == self.fake_restuarnt_id)
-                .first()
-                .open_times
-            )
+            updated_open_time = db.get(RestaurantOpenTime, open_time_obj.id)
 
-        self.assertEqual(update_open_time_obj[0].day_of_week, 5)
-        self.assertIsNotNone(update_open_time_obj[0].update_at)
+            self.assertEqual(updated_open_time.day_of_week, 5)
+            self.assertIsNotNone(updated_open_time.update_at)
 
     def test_delete_restaurant_open_time_function(self):
-        fake_open_time = FakeData.fake_restaurant_open_time()
-
         with self.fake_database.get_db() as db:
-            open_time_obj = RestaurantOpenTime(
-                **fake_open_time, restaurant_id=self.fake_restuarnt_id
-            )
-            db.add(open_time_obj)
-            db.commit()
+            open_time = self._get_open_time_obj(db)
 
-            open_time = (
-                db.query(RestaurantOpenTime)
-                .filter(RestaurantOpenTime.id == open_time_obj.id)
-                .first()
-            )
+            crud.delete_restaurant_open_time(db, open_time.id)
 
-            crud.delete_restaurant_open_time(db, open_time_obj.id)
-
-            delete_open_time_obj = (
-                db.query(RestaurantOpenTime)
-                .filter(RestaurantOpenTime.id == open_time_obj.id)
-                .first()
-            )
+            delete_open_time_obj = db.get(RestaurantOpenTime, open_time.id)
 
         self.assertIsNotNone(open_time)
         self.assertIsNone(delete_open_time_obj)

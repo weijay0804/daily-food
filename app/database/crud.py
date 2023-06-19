@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 22:13:53
-LastEditors: weijay
-LastEditTime: 2023-05-26 03:47:24
+LastEditors: andy
+LastEditTime: 2023-06-20 00:02:16
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -14,17 +14,6 @@ from sqlalchemy.orm import Session
 
 from app.database import model
 from app.schemas import database_schema
-
-
-def get_restaurant_open_times(db: Session, restaurant_id: int):
-    """取得 restauarnt_id 餐廳的所有營業時歌間"""
-
-    restaurant = db.query(model.Restaurant).filter(model.Restaurant.id == restaurant_id).first()
-
-    if restaurant is None:
-        return None
-
-    return restaurant.open_times
 
 
 def create_restaurant_open_times(
@@ -39,9 +28,12 @@ def create_restaurant_open_times(
     db_open_times = []
 
     for open_time in open_times:
-        db_open_times.append(
-            model.RestaurantOpenTime(**open_time.dict(), restaurant_id=restaurant_id)
-        )
+        db_open_times.append(model.RestaurantOpenTime(**open_time.dict()))
+
+    restaurant = db.get(model.Restaurant, restaurant_id)
+
+    for db_open_time in db_open_times:
+        restaurant.open_times.append(db_open_time)
 
     db.add_all(db_open_times)
     db.commit()
@@ -61,10 +53,12 @@ def update_restaurant_open_time(
     if open_time is None:
         return None
 
-    for field, value in update_data.dict(exclude_unset=True).items():
-        setattr(open_time, field, value)
+    for field, value in update_data.dict().items():
+        if value is None:
+            continue
 
-    open_time.update_at = datetime.utcnow()
+        else:
+            setattr(open_time, field, value)
 
     db.commit()
     db.refresh(open_time)
