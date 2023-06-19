@@ -9,6 +9,8 @@
     - [`Update`](#update)
     - [`Delete`](#delete)
   - [Restaurant Open Time](#restaurant-open-time)
+    - [`Create`](#create-1)
+  - [Restaurant Open Time](#restaurant-open-time-1)
     - [`Update`](#update-1)
     - [`Delete`](#delete-1)
   - [None](#none)
@@ -43,7 +45,8 @@ Return
             "phone" : "0228472392",
             "lat" : 23.00123,
             "lng" : 120.2314,
-            "price" : "中",
+            "price" : 250,
+            "desc" : "好吃的小籠包",
             "is_open" : true
         },
         {
@@ -52,6 +55,7 @@ Return
             "address" : "台北市信義區松仁路二段",
             "phone" : "022844313",
             "price" : "低",
+            "desc" : "素食",
             "lat" : 23.00123,
             "lng" : 120.2314,
             "is_open" : false
@@ -74,8 +78,8 @@ Send
     "address" : "台北市信義區松高路一段",
     "phone" : "0228472392",
     "desc" : "好吃的小籠包",
-    "price" : -1,
-    "b_hours" : [
+    "price" : 250,
+    "open_times" : [
         {
             "day_of_week" : 1,
             "open_time" : "12:00",
@@ -114,8 +118,8 @@ Return
     "lat" : 23.001,
     "lng" : 120.001,
     "desc" : "好吃的小籠包",
-    "price" : 0,
-    "b_hours" : [
+    "price" : 250,
+    "open_times" : [
         {
             "id" : 1,
             "day_of_week" : 1,
@@ -160,6 +164,36 @@ Send
 None
 
 ---
+## Restaurant Open Time
+> 餐廳營業時間路由
+( `/restaurant/[restaurant_id]/open_time` )
+
+---
+
+### `Create`
+
+> (POST) 新增 *`open_time`* 資料
+> 
+> 可以一次新增多筆
+
+Send
+```json
+items: [
+    {
+        "day_of_week" : 2,
+        "open_time" : "20:00",
+        "close_time" : "21:00"
+    },
+    {
+        "day_of_week" : 3,
+        "open_time" : "20:00",
+        "close_time" : "21:00"
+    }
+
+]
+
+```
+
 ---
 ## Restaurant Open Time 
 > 單一餐廳營業時間路由
