@@ -1,14 +1,14 @@
 '''
 Author: weijay
 Date: 2023-05-15 20:03:52
-LastEditors: weijay
-LastEditTime: 2023-05-22 18:58:20
+LastEditors: andy
+LastEditTime: 2023-06-17 04:00:59
 Description: 針對 database 中的 table 定義的 schemas
 '''
 
 import datetime
 from pydantic import BaseModel
-from typing import Union
+from typing import Optional
 
 
 class RestaurantDBModel(BaseModel):
@@ -16,19 +16,23 @@ class RestaurantDBModel(BaseModel):
 
     name: str
     address: str
-    phone: Union[str, None] = None
+    phone: Optional[str] = None
     lat: float
     lng: float
+    desc: Optional[str] = None
+    price: Optional[int] = None
 
 
 class RestaurantUpdateDBModel(BaseModel):
     """要更新 restaurant table 的資料時的 schames model"""
 
-    name: Union[str, None] = None
-    address: Union[str, None] = None
-    phone: Union[str, None] = None
-    lat: Union[float, None] = None
-    lng: Union[float, None] = None
+    name: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    desc: Optional[str] = None
+    price: Optional[int] = None
 
 
 class RestaurantOpenTimeDBModel(BaseModel):
@@ -42,6 +46,6 @@ class RestaurantOpenTimeDBModel(BaseModel):
 class RestaurantOpenTimeUpdateDBModel(BaseModel):
     """要更新 restaurant_open_time table 的資料時的 schames model"""
 
-    day_of_week: Union[int, None] = None
-    open_time: Union[datetime.time, None] = None
-    close_time: Union[datetime.time, None] = None
+    day_of_week: Optional[int] = None
+    open_time: Optional[datetime.time] = None
+    close_time: Optional[datetime.time] = None
