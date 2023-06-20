@@ -37,3 +37,27 @@
 - [ ] 新增餐廳營業時間保護
 - [ ] 刪除餐廳營業時間保護
 - [ ] 更新餐廳營業時間保護
+
+## 重構
+---
+- [ ] 在有使用的測試資料庫的單元測試中，把初始化測試資料庫的部分獨立出來
+  - [ ] `test_auth`
+  - [ ] `test_db_curd`
+  - [ ] `test_db_model_relation`
+  - [ ] `test_db_model`
+  - [ ] `test_routers`  
+- [ ] 把有使用到需要產生測試資料的部分獨立出來
+  - [ ] `test_db_curd.TestRestaurantCURD`
+  - [ ] `test_db_curd.TestRestaurantOpenTimeCRUD`
+  - [ ] `test_db_curd.TestUserCRUD`
+  - [ ] `test_db_model.TestRestaurantModel`
+  - [ ] `test_db_model.TestRestaurantOpenTimeModel`
+  - [ ] `test_db_model.TestRestaurantTypeModel`
+  - [ ] `test_db_model.TestUserModel`
+  - [ ] `test_db_model.TestOAuthModel`
+- [ ] 把跟 randomly 相關的操作單獨成一個測試 Case
+  - [ ] `test_db_curd.test_get_restaurant_randomly_function`
+  - [ ] `test_db_curd.test_get_restaurant_randomly_with_open_time_function`
+  - [ ] `test_routers.test_read_retaurant_randomly_router`
+  - [ ] `test_routers.test_read_retaurant_randomly_router_with_open_time`
+- [ ] 重構 `tests.utils.FakeData`
