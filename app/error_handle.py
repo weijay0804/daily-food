@@ -1,14 +1,14 @@
 '''
 Author: weijay
 Date: 2023-05-22 19:21:36
-LastEditors: weijay
-LastEditTime: 2023-05-22 19:42:00
+LastEditors: andy
+LastEditTime: 2023-06-20 22:50:25
 Description: 定義常見的錯誤
 '''
 
 from typing import Union
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 
 __all__ = ["ErrorHandler"]
@@ -19,6 +19,17 @@ class ErrorDesc:
 
     ERROR_400 = "Bad request."
     ERROR_404 = "The item you requested does not exist."
+
+
+class CustomError:
+    """自訂錯誤"""
+
+    def credentials_execption():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 class ErrorHandler:
