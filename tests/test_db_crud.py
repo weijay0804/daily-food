@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: andy
-LastEditTime: 2023-06-20 00:18:29
+LastEditTime: 2023-06-20 23:19:34
 Description: DataBase CRUD 單元測試
 '''
 
@@ -13,7 +13,7 @@ import datetime
 from sqlalchemy import text
 
 from app.schemas import database_schema
-from app.database.model import Restaurant, RestaurantOpenTime
+from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.database import crud
 from tests.utils import FakeData, FakeDataBase
 
@@ -304,3 +304,58 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
 
         self.assertIsNotNone(open_time)
         self.assertIsNone(delete_open_time_obj)
+
+
+class TestUserCRUD(InitialDataBaseTest):
+    def _get_user_obj(self, db) -> "User":
+        user = db.query(User).filter(User.username == self._fake_user_data["username"]).first()
+
+        return user
+
+    def setUp(self) -> None:
+        """先新增資料進去"""
+
+        # NOTE 如果之後 User 有做更改的話要檢查一下這邊
+        self._fake_user_data = {"username": "test", "email": "test@test.com", "password": "test"}
+
+        fake_user = User(**self._fake_user_data)
+
+        with self.fake_database.get_db() as db:
+            db.add(fake_user)
+            db.commit()
+
+    def tearDown(self) -> None:
+        """清理資料"""
+
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM user"))
+            db.commit()
+
+    def test_get_user_function(self):
+        """測試取得 user"""
+
+        with self.fake_database.get_db() as db:
+            user = crud.get_user_not_oauth(db, self._fake_user_data["username"])
+
+            fake_user = self._get_user_obj(db)
+
+            self.assertEqual(user, fake_user)
+
+    def test_create_user_function(self):
+        """測試新增 user"""
+
+        fake_user_date = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            crud.create_user_not_oauth(
+                db,
+                database_schema.UserNotOAuthDBModel(
+                    username=fake_user_date["username"],
+                    email=fake_user_date["email"],
+                    password=fake_user_date["password_hash"],
+                ),
+            )
+
+            user = db.query(User).filter(User.username == fake_user_date["username"]).first()
+
+            self.assertIsNotNone(user)
