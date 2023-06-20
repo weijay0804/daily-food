@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: andy
-LastEditTime: 2023-06-21 00:31:23
+LastEditTime: 2023-06-21 01:06:35
 Description: Api Router 單元測試
 '''
 
@@ -23,6 +23,7 @@ from app.routers.restaurant_router import get_db
 from app.routers.depends import get_db as get_db2
 
 
+# TODO 這邊應該獨立出來
 class InitialTestClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -114,6 +115,7 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
 
+    # TODO 這裡獨立出來
     def test_read_retaurant_randomly_router(self):
         inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
         outer_fake_data = FakeData.fake_restaurant_far()
@@ -150,6 +152,7 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['items']), 2)
 
+    # TODO 這裡獨立出來
     def test_read_retaurant_randomly_router_with_open_time(self):
         fake_data1, fake_data2 = FakeData.fake_restaurant(number=2)
 

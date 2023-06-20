@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: andy
-LastEditTime: 2023-06-20 23:19:34
+LastEditTime: 2023-06-21 01:06:00
 Description: DataBase CRUD 單元測試
 '''
 
@@ -18,6 +18,7 @@ from app.database import crud
 from tests.utils import FakeData, FakeDataBase
 
 
+# TODO 這邊應該獨立出來
 class InitialDataBaseTest(unittest.TestCase):
     """建立測試資料庫環境"""
 
@@ -47,6 +48,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def setUp(self) -> None:
         """先新增資料進去"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
         self._fake_restaurant_data = {
             "name": "test_restaurant",
@@ -139,6 +141,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
 
         self.assertIsNone(deleted_restaurant)
 
+    # TODO 這裡獨立出來
     def test_get_restaurant_randomly_function(self):
         fake_inner_data = FakeData.fake_restaurant()
         fake_outer_data = FakeData.fake_restaurant_far()
@@ -157,6 +160,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
         self.assertEqual(random_restaurant[0].name, fake_inner_data["name"])
         self.assertEqual(len(random_restaurant), 1)
 
+    # TODO 這裡獨立出來
     def test_get_restaurant_randomly_with_open_time_function(self):
         fake_inner_data1, fake_inner_data2 = FakeData.fake_restaurant(number=2)
 
@@ -236,6 +240,7 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
     def setUp(self) -> None:
         """先新增資料"""
 
+        # TODO 這邊不要這樣，應該統一生成
         self._fake_open_time_data = {
             "day_of_week": 100,
             "open_time": datetime.time(hour=8, minute=0),
@@ -315,6 +320,7 @@ class TestUserCRUD(InitialDataBaseTest):
     def setUp(self) -> None:
         """先新增資料進去"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果之後 User 有做更改的話要檢查一下這邊
         self._fake_user_data = {"username": "test", "email": "test@test.com", "password": "test"}
 

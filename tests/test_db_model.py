@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: andy
-LastEditTime: 2023-06-11 23:30:00
+LastEditTime: 2023-06-21 01:04:41
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -16,6 +16,7 @@ from app.database.model import Restaurant, RestaurantOpenTime, RestaurantType, U
 from tests.utils import FakeData, FakeDataBase
 
 
+# TODO 這邊應該獨立出來
 class InitialDataBaseTest(unittest.TestCase):
     """建立測試資料庫環境"""
 
@@ -49,6 +50,7 @@ class TestRestaurantModel(InitialDataBaseTest):
     def setUp(self) -> None:
         """在每個測試前先新增資料至資料庫"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
 
         self._fake_restaurant_data = {
@@ -183,6 +185,7 @@ class TestRestaurantOpenTimeModel(InitialDataBaseTest):
     def setUp(self) -> None:
         """在每個測試執行前，先新增資料到資料庫"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果 restaurant_open_time table 有更改的話，要檢查一下這邊
 
         self._fake_open_time_data = {
@@ -290,6 +293,7 @@ class TestRestaurantTypeModel(InitialDataBaseTest):
     def setUp(self) -> None:
         """在每個測試前，先新增資料"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果 RestaurantType 有變動，要檢查一下這邊
 
         self._fake_type_data = {"name": "test_type", "desc": "This is test type"}
@@ -397,6 +401,7 @@ class TestUserModel(InitialDataBaseTest):
     def setUp(self) -> None:
         """在每個測試前，先新增資料到資料庫"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果 User model 有變更的話，要檢查一下這邊
         self._fake_uesr_data = {
             "username": "test_user",
@@ -504,6 +509,7 @@ class TestOAuthModel(InitialDataBaseTest):
     def setUp(self) -> None:
         """在每個測試前，先新增資料的資料庫"""
 
+        # TODO 這邊不要這樣，應該統一生成
         # NOTE 如果 OAuth model 有變更的話，要檢查一下這邊
         self._fake_oauth_data = {"provider": "test_provider", "access_token": "test_token"}
 

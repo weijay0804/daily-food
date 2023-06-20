@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-06-04 15:24:07
 LastEditors: andy
-LastEditTime: 2023-06-11 23:11:51
+LastEditTime: 2023-06-21 00:59:43
 Description: DataBase ORM 模型關聯性單元測試
 '''
 
@@ -16,6 +16,7 @@ from app.database.model import Restaurant, RestaurantOpenTime, RestaurantType, U
 from tests.utils import FakeDataBase, FakeData
 
 
+# TODO 這邊應該獨立出來
 class InitialDataBaseTest(unittest.TestCase):
     """建立測試資料庫環境"""
 

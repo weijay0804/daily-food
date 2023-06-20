@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: andy
-LastEditTime: 2023-06-20 00:09:57
+LastEditTime: 2023-06-21 01:12:29
 Description: 餐廳路由
 '''
 
@@ -22,6 +22,7 @@ from app.error_handle import ErrorHandler
 router = APIRouter(prefix="/restaurant")
 
 
+# 這裡改成使用 `depends`
 def get_db():
     db = SessionLocal()
 
@@ -89,6 +90,8 @@ def update_restaurant(
     restaurant_id: str, item: restaurant_schema.OnUpdateModel, db: Session = Depends(get_db)
 ):
     """更新餐廳"""
+
+    # TODO 這裡要檢查有沒有更改到 `address` ，如果有，要重新取得經緯度
 
     updated_restaurant = crud.update_restaurant(
         db, restaurant_id, database_schema.RestaurantUpdateDBModel(**item.dict())

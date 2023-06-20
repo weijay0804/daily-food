@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 17:08:09
 LastEditors: andy
-LastEditTime: 2023-06-20 00:09:25
+LastEditTime: 2023-06-21 01:11:23
 Description: 定義 restaurant router 的數據模型
 '''
 
@@ -18,6 +18,7 @@ class _OpenTimeBaseModel(BaseModel):
     close_time: str
 
 
+# TODO 這裡改成 `OpenTimeInDBModel`
 class _OpenTimeModel(_OpenTimeBaseModel):
     """對應 restaurant_open_time table 的 schemas model"""
 
@@ -51,6 +52,7 @@ class _BaseModel(BaseModel):
     price: Optional[int] = None
 
 
+# TODO 這裡改成 `RestaurantInDBModel`
 class RestaurantModel(_BaseModel):
     """對應 restaurant table 的 schemas model"""
 

@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 23:23:55
 LastEditors: andy
-LastEditTime: 2023-06-20 23:53:55
+LastEditTime: 2023-06-21 00:58:56
 Description: auth 單元測試
 '''
 
@@ -14,6 +14,7 @@ from app.database.model import User
 from tests.utils import FakeData, FakeDataBase
 
 
+# TODO 這邊應該獨立出來
 class InitialDataBaseTest(unittest.TestCase):
     """建立測試資料庫環境"""
 

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: andy
-LastEditTime: 2023-06-10 13:18:38
+LastEditTime: 2023-06-21 01:08:58
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -17,6 +17,7 @@ from app.database.model import Base
 from . import _fake_data
 
 
+# TODO 重構這邊，不要寫那麼複雜，不管 number 是不是 1 一律用 `random.sample`
 class FakeData:
     """用來建立隨機測試資料"""
 
@@ -211,6 +212,7 @@ class FakeData:
 
         return result
 
+    # TODO 把 password_hash 更改成 password
     def fake_user(is_oauth: bool = False, number: int = 1):
         if number <= 1:
             username = random.choice(_fake_data.FakeUser.USERNAME)
