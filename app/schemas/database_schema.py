@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 20:03:52
 LastEditors: andy
-LastEditTime: 2023-06-17 04:00:59
+LastEditTime: 2023-06-20 02:45:52
 Description: 針對 database 中的 table 定義的 schemas
 '''
 
@@ -49,3 +49,12 @@ class RestaurantOpenTimeUpdateDBModel(BaseModel):
     day_of_week: Optional[int] = None
     open_time: Optional[datetime.time] = None
     close_time: Optional[datetime.time] = None
+
+
+class UserNotOAuthDBModel(BaseModel):
+    """要建立不是使用 OAuth 註冊時的 user"""
+
+    username: str
+    email: str
+    password: str
+    is_oauth: int = 0
