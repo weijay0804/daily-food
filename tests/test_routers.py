@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: andy
-LastEditTime: 2023-06-20 00:18:44
+LastEditTime: 2023-06-21 00:31:23
 Description: Api Router 單元測試
 '''
 
@@ -16,10 +16,11 @@ from sqlalchemy import text
 
 from app.config import config
 from app import create_app
-from app.database.model import Restaurant, RestaurantOpenTime
+from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
 from app.routers.restaurant_router import get_db
+from app.routers.depends import get_db as get_db2
 
 
 class InitialTestClient(unittest.TestCase):
@@ -262,3 +263,50 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
         response = self.client.delete(f"/api/v1/restaurant/open_time/{db_open_time.id}")
 
         self.assertEqual(response.status_code, 200)
+
+
+class TestUserRouter(InitialTestClient):
+    def setUp(self) -> None:
+        # TODO 這邊之後要更改
+        self.test_app.dependency_overrides[get_db2] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM user"))
+            db.commit()
+
+    def test_user_register(self):
+        fake_data = FakeData.fake_user()
+
+        response = self.client.post(
+            "/api/v1/user/",
+            json={
+                "username": fake_data["username"],
+                "email": fake_data["email"],
+                "password": fake_data["password_hash"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_user_login(self):
+        fake_user = FakeData.fake_user()
+        db_user = User(
+            username=fake_user["username"],
+            email=fake_user["email"],
+            password=fake_user["password_hash"],
+        )
+
+        with self.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+
+        response = self.client.post(
+            "/api/v1/user/token",
+            data={"username": fake_user["username"], "password": fake_user["password_hash"]},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.json().get("access_token"))
+        self.assertEqual(response.json().get("token_type"), "bearer")
