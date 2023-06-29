@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-25 16:26:37
-LastEditors: andy
-LastEditTime: 2023-06-21 01:06:35
+LastEditors: weijay
+LastEditTime: 2023-06-30 02:11:25
 Description: Api Router 單元測試
 '''
 
@@ -23,7 +23,6 @@ from app.routers.restaurant_router import get_db
 from app.routers.depends import get_db as get_db2
 
 
-# TODO 這邊應該獨立出來
 class InitialTestClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

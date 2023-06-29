@@ -1,39 +1,21 @@
 '''
 Author: weijay
 Date: 2023-04-24 23:09:47
-LastEditors: andy
-LastEditTime: 2023-06-21 01:04:41
+LastEditors: weijay
+LastEditTime: 2023-06-30 02:09:23
 Description: DataBase ORM 模型單元測試
 '''
 
-import os
-import unittest
 from datetime import datetime, time
 
 from sqlalchemy import text
 
 from app.database.model import Restaurant, RestaurantOpenTime, RestaurantType, User, OAuth
-from tests.utils import FakeData, FakeDataBase
+from tests import BaseDataBaseTestCase
+from tests.utils import FakeData
 
 
-# TODO 這邊應該獨立出來
-class InitialDataBaseTest(unittest.TestCase):
-    """建立測試資料庫環境"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.fake_database = FakeDataBase()
-        cls.fake_database.Base.metadata.create_all(bind=cls.fake_database.engine)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.fake_database.engine.clear_compiled_cache()
-        cls.fake_database.engine.dispose()
-        cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
-
-
-class TestRestaurantModel(InitialDataBaseTest):
+class TestRestaurantModel(BaseDataBaseTestCase):
     """Restaraunt Table ORM 模型單元測試"""
 
     def _get_restaurant_obj(self, db) -> "Restaurant":
@@ -144,7 +126,7 @@ class TestRestaurantModel(InitialDataBaseTest):
             self.assertIsNone(deleted_restaurant)
 
 
-class TestRestaurantOpenTimeModel(InitialDataBaseTest):
+class TestRestaurantOpenTimeModel(BaseDataBaseTestCase):
     """RestaurantOpenTime ORM 模型單元測試"""
 
     def _get_restaurant_obj(self, db) -> "Restaurant":
@@ -287,7 +269,7 @@ class TestRestaurantOpenTimeModel(InitialDataBaseTest):
             self.assertIsNone(deleted_data)
 
 
-class TestRestaurantTypeModel(InitialDataBaseTest):
+class TestRestaurantTypeModel(BaseDataBaseTestCase):
     """RestaurantType Model 單元測試"""
 
     def setUp(self) -> None:
@@ -395,7 +377,7 @@ class TestRestaurantTypeModel(InitialDataBaseTest):
             self.assertIsNone(deleted_r_type)
 
 
-class TestUserModel(InitialDataBaseTest):
+class TestUserModel(BaseDataBaseTestCase):
     """User Model 單元測試"""
 
     def setUp(self) -> None:
@@ -488,7 +470,7 @@ class TestUserModel(InitialDataBaseTest):
             self.assertIsNone(deleted_user)
 
 
-class TestOAuthModel(InitialDataBaseTest):
+class TestOAuthModel(BaseDataBaseTestCase):
     """OAuth model 單元測試"""
 
     @classmethod

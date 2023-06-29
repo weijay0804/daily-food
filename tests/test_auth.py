@@ -1,37 +1,18 @@
 '''
 Author: andy
 Date: 2023-06-20 23:23:55
-LastEditors: andy
-LastEditTime: 2023-06-21 00:58:56
+LastEditors: weijay
+LastEditTime: 2023-06-30 02:03:35
 Description: auth 單元測試
 '''
 
-import os
-import unittest
-
 from app import auth
 from app.database.model import User
-from tests.utils import FakeData, FakeDataBase
+from tests import BaseDataBaseTestCase
+from tests.utils import FakeData
 
 
-# TODO 這邊應該獨立出來
-class InitialDataBaseTest(unittest.TestCase):
-    """建立測試資料庫環境"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.fake_database = FakeDataBase()
-        cls.fake_database.Base.metadata.create_all(bind=cls.fake_database.engine)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.fake_database.engine.clear_compiled_cache()
-        cls.fake_database.engine.dispose()
-        cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
-
-
-class TestAuth(InitialDataBaseTest):
+class TestAuth(BaseDataBaseTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         """先新增 user 資料"""

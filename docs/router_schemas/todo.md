@@ -40,12 +40,11 @@
 
 ## 重構
 ---
-- [ ] 在有使用的測試資料庫的單元測試中，把初始化測試資料庫的部分獨立出來
-  - [ ] `test_auth`
-  - [ ] `test_db_curd`
-  - [ ] `test_db_model_relation`
-  - [ ] `test_db_model`
-  - [ ] `test_routers`  
+- [x] 在有使用的測試資料庫的單元測試中，把初始化測試資料庫的部分獨立出來
+  - [x] `test_auth`
+  - [x] `test_db_curd`
+  - [x] `test_db_model_relation`
+  - [x] `test_db_model`  
 - [ ] 把有使用到需要產生測試資料的部分獨立出來
   - [ ] `test_db_curd.TestRestaurantCURD`
   - [ ] `test_db_curd.TestRestaurantOpenTimeCRUD`

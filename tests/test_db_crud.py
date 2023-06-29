@@ -1,13 +1,11 @@
 '''
 Author: weijay
 Date: 2023-05-15 22:05:37
-LastEditors: andy
-LastEditTime: 2023-06-21 01:06:00
+LastEditors: weijay
+LastEditTime: 2023-06-30 02:06:55
 Description: DataBase CRUD 單元測試
 '''
 
-import os
-import unittest
 import datetime
 
 from sqlalchemy import text
@@ -15,27 +13,11 @@ from sqlalchemy import text
 from app.schemas import database_schema
 from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.database import crud
-from tests.utils import FakeData, FakeDataBase
+from tests import BaseDataBaseTestCase
+from tests.utils import FakeData
 
 
-# TODO 這邊應該獨立出來
-class InitialDataBaseTest(unittest.TestCase):
-    """建立測試資料庫環境"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.fake_database = FakeDataBase()
-        cls.fake_database.Base.metadata.create_all(bind=cls.fake_database.engine)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.fake_database.engine.clear_compiled_cache()
-        cls.fake_database.engine.dispose()
-        cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
-
-
-class TestRestaurantCURD(InitialDataBaseTest):
+class TestRestaurantCURD(BaseDataBaseTestCase):
     def _get_restaurant_obj(self, db) -> "Restaurant":
         r_obj = (
             db.query(Restaurant)
@@ -208,7 +190,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
             )
 
 
-class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
+class TestRestaurantOpenTimeCRUD(BaseDataBaseTestCase):
     def _get_restaurant_obj(self, db) -> "Restaurant":
         r_obj = db.query(Restaurant).filter(Restaurant.name == self.fake_data["name"]).first()
 
@@ -311,7 +293,7 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
         self.assertIsNone(delete_open_time_obj)
 
 
-class TestUserCRUD(InitialDataBaseTest):
+class TestUserCRUD(BaseDataBaseTestCase):
     def _get_user_obj(self, db) -> "User":
         user = db.query(User).filter(User.username == self._fake_user_data["username"]).first()
 
