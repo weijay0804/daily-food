@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 17:08:09
-LastEditors: andy
-LastEditTime: 2023-06-21 01:11:23
+LastEditors: weijay
+LastEditTime: 2023-07-03 23:38:53
 Description: 定義 restaurant router 的數據模型
 '''
 
@@ -18,8 +18,7 @@ class _OpenTimeBaseModel(BaseModel):
     close_time: str
 
 
-# TODO 這裡改成 `OpenTimeInDBModel`
-class _OpenTimeModel(_OpenTimeBaseModel):
+class _OpenTimeInDBModel(_OpenTimeBaseModel):
     """對應 restaurant_open_time table 的 schemas model"""
 
     id: int
@@ -52,8 +51,7 @@ class _BaseModel(BaseModel):
     price: Optional[int] = None
 
 
-# TODO 這裡改成 `RestaurantInDBModel`
-class RestaurantModel(_BaseModel):
+class RestaurantInDBModel(_BaseModel):
     """對應 restaurant table 的 schemas model"""
 
     id: int
@@ -64,7 +62,7 @@ class RestaurantModel(_BaseModel):
         orm_mode = True
 
 
-class _OnReadsModel(RestaurantModel):
+class _OnReadsModel(RestaurantInDBModel):
     """餐廳基本 schemas 但新增了 `is_open` 欄位，用於回傳多個 restaurant 時"""
 
     is_open: bool = True
@@ -76,10 +74,10 @@ class OnReadsModel(BaseModel):
     items: List[_OnReadsModel]
 
 
-class OnReadModel(RestaurantModel):
+class OnReadModel(RestaurantInDBModel):
     """取得特定一筆餐廳時的 schemas model"""
 
-    open_times: List[_OpenTimeModel]
+    open_times: List[_OpenTimeInDBModel]
 
 
 class OnCreateModel(_BaseModel):
