@@ -59,4 +59,4 @@
   - [x] `test_db_curd.test_get_restaurant_randomly_with_open_time_function`
   - [x] `test_routers.test_read_retaurant_randomly_router`
   - [x] `test_routers.test_read_retaurant_randomly_router_with_open_time`
-- [ ] 重構 `tests.utils.FakeData`
+- [x] 重構 `tests.utils.FakeData`
