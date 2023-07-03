@@ -4,6 +4,10 @@ on:
   push:
     branches: ["main", "dev"]
 
+env:
+  MAP_API_KEY: test_map_api_key
+  JWT_SECRET_KEY: 6b17073ec9d05a41fb6925190809a27ebdc09b72fbd0033e58496620ced11866
+
 jobs:
   run-test:
     name: Run Test
