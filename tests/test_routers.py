@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:59:10
+LastEditTime: 2023-07-03 23:06:32
 Description: Api Router 單元測試
 '''
 
@@ -293,7 +293,7 @@ class TestUserRouter(InitialTestClient):
             json={
                 "username": fake_data["username"],
                 "email": fake_data["email"],
-                "password": fake_data["password_hash"],
+                "password": fake_data["password"],
             },
         )
 
@@ -304,7 +304,7 @@ class TestUserRouter(InitialTestClient):
         db_user = User(
             username=fake_user["username"],
             email=fake_user["email"],
-            password=fake_user["password_hash"],
+            password=fake_user["password"],
         )
 
         with self.fake_database.get_db() as db:
@@ -313,7 +313,7 @@ class TestUserRouter(InitialTestClient):
 
         response = self.client.post(
             "/api/v1/user/token",
-            data={"username": fake_user["username"], "password": fake_user["password_hash"]},
+            data={"username": fake_user["username"], "password": fake_user["password"]},
             headers={"WWW-Authenticate": "Bearer"},
         )
 

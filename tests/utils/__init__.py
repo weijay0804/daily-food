@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:54:21
+LastEditTime: 2023-07-03 23:07:49
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -171,7 +171,6 @@ class FakeData:
 
         return result
 
-    # TODO 把 password_hash 更改成 password
     def fake_user(is_oauth: bool = False, number: int = 1):
         result = []
 
@@ -179,13 +178,13 @@ class FakeData:
         email_list = random.sample(_fake_data.FakeUser.USERNAME, number)
 
         if not is_oauth:
-            password_hash_list = random.sample(_fake_data.FakeUser.PASSWORD_HASH, number)
+            password_list = random.sample(_fake_data.FakeUser.PASSWORD, number)
 
         for i in range(number):
             tmp = {"username": username_list[i], "email": email_list[i]}
 
             if not is_oauth:
-                tmp.update({"password_hash": password_hash_list[i]})
+                tmp.update({"password": password_list[i]})
 
             else:
                 tmp.update({"is_oauth": True})

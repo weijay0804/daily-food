@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-07-03 21:04:22
+LastEditTime: 2023-07-03 23:07:27
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -391,7 +391,7 @@ class TestUserModel(BaseDataBaseTestCase):
 
             self.assertEqual(data.username, fake_user["username"])
             self.assertEqual(data.email, fake_user["email"])
-            self.assertEqual(data.password_hash, fake_user["password_hash"])
+            self.assertTrue(data.verify_password(fake_user["password"]))
             self.assertEqual(data.is_oauth, False)
             self.assertEqual(data.is_enable, True)
             self.assertIsNotNone(data.create_at)

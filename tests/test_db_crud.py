@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:39:17
+LastEditTime: 2023-07-03 23:05:11
 Description: DataBase CRUD 單元測試
 '''
 
@@ -331,7 +331,7 @@ class TestUserCRUD(BaseDataBaseTestCase):
                 database_schema.UserNotOAuthDBModel(
                     username=fake_user_date["username"],
                     email=fake_user_date["email"],
-                    password=fake_user_date["password_hash"],
+                    password=fake_user_date["password"],
                 ),
             )
 

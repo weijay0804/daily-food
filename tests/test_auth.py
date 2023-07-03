@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 23:23:55
 LastEditors: weijay
-LastEditTime: 2023-06-30 02:03:35
+LastEditTime: 2023-07-03 23:04:42
 Description: auth 單元測試
 '''
 
@@ -24,7 +24,7 @@ class TestAuth(BaseDataBaseTestCase):
         user = User(
             username=cls._fake_user["username"],
             email=cls._fake_user["email"],
-            password=cls._fake_user["password_hash"],
+            password=cls._fake_user["password"],
         )
 
         with cls.fake_database.get_db() as db:
@@ -34,7 +34,7 @@ class TestAuth(BaseDataBaseTestCase):
     def test_authenticate_user_with_corret_password(self):
         with self.fake_database.get_db() as db:
             user = auth.authenticate_user(
-                db, self._fake_user["username"], self._fake_user["password_hash"]
+                db, self._fake_user["username"], self._fake_user["password"]
             )
 
             self.assertTrue(user)
@@ -47,7 +47,7 @@ class TestAuth(BaseDataBaseTestCase):
 
     def test_authenticate_user_with_not_exist_user(self):
         with self.fake_database.get_db() as db:
-            user = auth.authenticate_user(db, "not exist user", self._fake_user["password_hash"])
+            user = auth.authenticate_user(db, "not exist user", self._fake_user["password"])
 
             self.assertFalse(user)
 
