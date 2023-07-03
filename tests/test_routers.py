@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-06-30 02:11:25
+LastEditTime: 2023-07-03 22:42:06
 Description: Api Router 單元測試
 '''
 
@@ -114,7 +114,18 @@ class TestResaurantRotuer(InitialTestClient):
 
         self.assertEqual(response.status_code, 200)
 
-    # TODO 這裡獨立出來
+
+class TestChoiceRestaurantRouter(InitialTestClient):
+    """隨機選擇餐廳路由測試"""
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
+
     def test_read_retaurant_randomly_router(self):
         inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
         outer_fake_data = FakeData.fake_restaurant_far()
@@ -151,7 +162,6 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['items']), 2)
 
-    # TODO 這裡獨立出來
     def test_read_retaurant_randomly_router_with_open_time(self):
         fake_data1, fake_data2 = FakeData.fake_restaurant(number=2)
 

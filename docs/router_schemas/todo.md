@@ -54,9 +54,9 @@
   - [x] `test_db_model.TestRestaurantTypeModel`
   - [x] `test_db_model.TestUserModel`
   - [x] `test_db_model.TestOAuthModel`
-- [ ] 把跟 randomly 相關的操作單獨成一個測試 Case
-  - [ ] `test_db_curd.test_get_restaurant_randomly_function`
-  - [ ] `test_db_curd.test_get_restaurant_randomly_with_open_time_function`
-  - [ ] `test_routers.test_read_retaurant_randomly_router`
-  - [ ] `test_routers.test_read_retaurant_randomly_router_with_open_time`
+- [x] 把跟 randomly 相關的操作單獨成一個測試 Case
+  - [x] `test_db_curd.test_get_restaurant_randomly_function`
+  - [x] `test_db_curd.test_get_restaurant_randomly_with_open_time_function`
+  - [x] `test_routers.test_read_retaurant_randomly_router`
+  - [x] `test_routers.test_read_retaurant_randomly_router_with_open_time`
 - [ ] 重構 `tests.utils.FakeData`

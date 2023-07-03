@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 20:55:55
+LastEditTime: 2023-07-03 22:39:17
 Description: DataBase CRUD 單元測試
 '''
 
@@ -114,7 +114,15 @@ class TestRestaurantCURD(BaseDataBaseTestCase):
 
         self.assertIsNone(deleted_restaurant)
 
-    # TODO 這裡獨立出來
+
+class TestChoiceRestaurantCURD(BaseDataBaseTestCase):
+    """隨機選擇餐廳 CURD 功能測試"""
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
+
     def test_get_restaurant_randomly_function(self):
         fake_inner_data = FakeData.fake_restaurant()
         fake_outer_data = FakeData.fake_restaurant_far()
@@ -133,7 +141,6 @@ class TestRestaurantCURD(BaseDataBaseTestCase):
         self.assertEqual(random_restaurant[0].name, fake_inner_data["name"])
         self.assertEqual(len(random_restaurant), 1)
 
-    # TODO 這裡獨立出來
     def test_get_restaurant_randomly_with_open_time_function(self):
         fake_inner_data1, fake_inner_data2 = FakeData.fake_restaurant(number=2)
 
