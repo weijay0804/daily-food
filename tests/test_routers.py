@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:42:06
+LastEditTime: 2023-07-03 22:59:10
 Description: Api Router 單元測試
 '''
 
@@ -19,8 +19,7 @@ from app import create_app
 from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
-from app.routers.restaurant_router import get_db
-from app.routers.depends import get_db as get_db2
+from app.routers.depends import get_db
 
 
 class InitialTestClient(unittest.TestCase):
@@ -279,8 +278,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
 
 class TestUserRouter(InitialTestClient):
     def setUp(self) -> None:
-        # TODO 這邊之後要更改
-        self.test_app.dependency_overrides[get_db2] = self.fake_database.override_get_db
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
 
     def tearDown(self) -> None:
         with self.fake_database.get_db() as db:

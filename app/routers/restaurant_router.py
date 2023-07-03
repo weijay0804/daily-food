@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 15:58:18
-LastEditors: andy
-LastEditTime: 2023-06-21 01:12:29
+LastEditors: weijay
+LastEditTime: 2023-07-03 22:59:35
 Description: 餐廳路由
 '''
 
@@ -13,24 +13,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.schemas import restaurant_schema, database_schema
-from app.database import SessionLocal
 from app.database import crud
 from app.utils import MapApi
 from app.error_handle import ErrorHandler
+from app.routers.depends import get_db
 
 
 router = APIRouter(prefix="/restaurant")
-
-
-# 這裡改成使用 `depends`
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
 
 
 @router.get("/", response_model=restaurant_schema.OnReadsModel)
