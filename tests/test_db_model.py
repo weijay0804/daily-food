@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 23:09:47
 LastEditors: weijay
-LastEditTime: 2023-06-30 02:09:23
+LastEditTime: 2023-07-03 21:04:22
 Description: DataBase ORM 模型單元測試
 '''
 
@@ -12,7 +12,7 @@ from sqlalchemy import text
 
 from app.database.model import Restaurant, RestaurantOpenTime, RestaurantType, User, OAuth
 from tests import BaseDataBaseTestCase
-from tests.utils import FakeData
+from tests.utils import FakeData, FakeInitData
 
 
 class TestRestaurantModel(BaseDataBaseTestCase):
@@ -32,15 +32,7 @@ class TestRestaurantModel(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """在每個測試前先新增資料至資料庫"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
-
-        self._fake_restaurant_data = {
-            "name": "test_restaurant",
-            "address": "test_address",
-            "lat": 23.001,
-            "lng": 120.001,
-        }
+        self._fake_restaurant_data = FakeInitData.fake_restaurant()
 
         fake_restaurant = Restaurant(**self._fake_restaurant_data)
 
@@ -167,14 +159,7 @@ class TestRestaurantOpenTimeModel(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """在每個測試執行前，先新增資料到資料庫"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果 restaurant_open_time table 有更改的話，要檢查一下這邊
-
-        self._fake_open_time_data = {
-            "day_of_week": 2,
-            "open_time": time(hour=12, minute=0),
-            "close_time": time(hour=20, minute=0),
-        }
+        self._fake_open_time_data = FakeInitData.fake_restaurant_open_time()
 
         with self.fake_database.get_db() as db:
             r_obj = self._get_restaurant_obj(db)
@@ -275,10 +260,7 @@ class TestRestaurantTypeModel(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """在每個測試前，先新增資料"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果 RestaurantType 有變動，要檢查一下這邊
-
-        self._fake_type_data = {"name": "test_type", "desc": "This is test type"}
+        self._fake_type_data = FakeInitData.fake_restaurant_type()
 
         fake_restaurant_type = RestaurantType(**self._fake_type_data)
 
@@ -383,13 +365,7 @@ class TestUserModel(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """在每個測試前，先新增資料到資料庫"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果 User model 有變更的話，要檢查一下這邊
-        self._fake_uesr_data = {
-            "username": "test_user",
-            "email": "test_user@test.com",
-            "password_hash": "This is hashed password",
-        }
+        self._fake_uesr_data = FakeInitData.fake_user()
 
         with self.fake_database.get_db() as db:
             db.add(User(**self._fake_uesr_data))
@@ -431,7 +407,7 @@ class TestUserModel(BaseDataBaseTestCase):
             self.assertIsNotNone(user)
             self.assertEqual(user.username, self._fake_uesr_data["username"])
             self.assertEqual(user.email, self._fake_uesr_data["email"])
-            self.assertEqual(user.password_hash, self._fake_uesr_data["password_hash"])
+            self.assertTrue(user.verify_password(self._fake_uesr_data["password"]))
 
     def test_update_user(self):
         """更新使用者測試"""
@@ -491,9 +467,7 @@ class TestOAuthModel(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """在每個測試前，先新增資料的資料庫"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果 OAuth model 有變更的話，要檢查一下這邊
-        self._fake_oauth_data = {"provider": "test_provider", "access_token": "test_token"}
+        self._fake_oauth_data = FakeInitData.fake_user_oauth()
 
         with self.fake_database.get_db() as db:
             db.add(OAuth(**self._fake_oauth_data, user=self.fake_user))

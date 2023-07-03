@@ -2,11 +2,9 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-06-30 02:06:55
+LastEditTime: 2023-07-03 20:55:55
 Description: DataBase CRUD 單元測試
 '''
-
-import datetime
 
 from sqlalchemy import text
 
@@ -14,7 +12,7 @@ from app.schemas import database_schema
 from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.database import crud
 from tests import BaseDataBaseTestCase
-from tests.utils import FakeData
+from tests.utils import FakeData, FakeInitData
 
 
 class TestRestaurantCURD(BaseDataBaseTestCase):
@@ -30,14 +28,7 @@ class TestRestaurantCURD(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """先新增資料進去"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
-        self._fake_restaurant_data = {
-            "name": "test_restaurant",
-            "address": "test_address",
-            "lat": 23.001,
-            "lng": 120.001,
-        }
+        self._fake_restaurant_data = FakeInitData.fake_restaurant()
 
         fake_restaurant = Restaurant(**self._fake_restaurant_data)
 
@@ -222,12 +213,7 @@ class TestRestaurantOpenTimeCRUD(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """先新增資料"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        self._fake_open_time_data = {
-            "day_of_week": 100,
-            "open_time": datetime.time(hour=8, minute=0),
-            "close_time": datetime.time(hour=22, minute=0),
-        }
+        self._fake_open_time_data = FakeInitData.fake_restaurant_open_time()
 
         with self.fake_database.get_db() as db:
             r_obj = self._get_restaurant_obj(db)
@@ -302,9 +288,7 @@ class TestUserCRUD(BaseDataBaseTestCase):
     def setUp(self) -> None:
         """先新增資料進去"""
 
-        # TODO 這邊不要這樣，應該統一生成
-        # NOTE 如果之後 User 有做更改的話要檢查一下這邊
-        self._fake_user_data = {"username": "test", "email": "test@test.com", "password": "test"}
+        self._fake_user_data = FakeInitData.fake_user()
 
         fake_user = User(**self._fake_user_data)
 

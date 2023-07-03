@@ -1,11 +1,12 @@
 '''
 Author: weijay
 Date: 2023-04-25 17:19:24
-LastEditors: andy
-LastEditTime: 2023-06-21 01:08:58
+LastEditors: weijay
+LastEditTime: 2023-07-03 21:02:21
 Description: 放一些測試時會用到的通用函示
 '''
 
+import datetime
 import random
 from contextlib import contextmanager
 
@@ -269,6 +270,91 @@ class FakeData:
                 result.append(tmp)
 
         return result
+
+
+class FakeInitData:
+    """生成測試資料
+    與 :class:`FakeData` 不同的是， :class:`FakeInitData` 是生成在測試初始化時要新增進資料庫的資料。
+
+    :class:`FakeInitData` 生成的資料不會跟 :class:`FakeData` 重複。
+    """
+
+    def fake_restaurant() -> dict:
+        """生成餐廳測試資料
+
+        測試資料的欄位有:
+        - `name` (str)
+        - `address` (str)
+        - `lat` (float)
+        - `lng` (float)
+        """
+
+        fake_data = {
+            "name": "test_restaurant_name",
+            "address": "test_restaurant_address",
+            "lat": 23.001,
+            "lng": 120.001,
+        }
+
+        return fake_data
+
+    def fake_restaurant_open_time() -> dict:
+        """生成餐廳營業時間測試資料
+
+        測試資料的欄位有:
+        - `day_of_week` (int)
+        - `open_time` (datetime.time)
+        - `close_time` (datetime.time)
+        """
+
+        fake_data = {
+            "day_of_week": 100,
+            "open_time": datetime.time(hour=8, minute=0),
+            "close_time": datetime.time(hour=22, minute=0),
+        }
+
+        return fake_data
+
+    def fake_restaurant_type() -> dict:
+        """生成餐廳種類測試資料
+
+        測試資料的欄位有:
+        - `name` (str)
+        - `desc` (str)
+        """
+
+        fake_data = {"name": "restaurant_test_type", "desc": "This_is_a_restaurant_test_type"}
+
+        return fake_data
+
+    def fake_user() -> dict:
+        """生成使用者測試資料
+
+        測試資料的欄位有:
+        - `username` (str)
+        - `email` (str)
+        - `password` (str)
+        """
+
+        fake_data = {
+            "username": "test_user",
+            "email": "test_user@test.com",
+            "password": "this_is_test_user_password",
+        }
+
+        return fake_data
+
+    def fake_user_oauth() -> dict:
+        """生成使用者 OAuth 測試資料
+
+        測試資料的欄位有:
+        - `provider` (str)
+        - `access_token` (str)
+        """
+
+        fake_data = {"provider": "test_oauth_provider", "access_token": "test_oauth_access_token"}
+
+        return fake_data
 
 
 class FakeDataBase:

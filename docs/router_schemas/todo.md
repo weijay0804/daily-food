@@ -45,15 +45,15 @@
   - [x] `test_db_curd`
   - [x] `test_db_model_relation`
   - [x] `test_db_model`  
-- [ ] 把有使用到需要產生測試資料的部分獨立出來
-  - [ ] `test_db_curd.TestRestaurantCURD`
-  - [ ] `test_db_curd.TestRestaurantOpenTimeCRUD`
-  - [ ] `test_db_curd.TestUserCRUD`
-  - [ ] `test_db_model.TestRestaurantModel`
-  - [ ] `test_db_model.TestRestaurantOpenTimeModel`
-  - [ ] `test_db_model.TestRestaurantTypeModel`
-  - [ ] `test_db_model.TestUserModel`
-  - [ ] `test_db_model.TestOAuthModel`
+- [x] 把有使用到需要產生測試資料的部分獨立出來
+  - [x] `test_db_curd.TestRestaurantCURD`
+  - [x] `test_db_curd.TestRestaurantOpenTimeCRUD`
+  - [x] `test_db_curd.TestUserCRUD`
+  - [x] `test_db_model.TestRestaurantModel`
+  - [x] `test_db_model.TestRestaurantOpenTimeModel`
+  - [x] `test_db_model.TestRestaurantTypeModel`
+  - [x] `test_db_model.TestUserModel`
+  - [x] `test_db_model.TestOAuthModel`
 - [ ] 把跟 randomly 相關的操作單獨成一個測試 Case
   - [ ] `test_db_curd.test_get_restaurant_randomly_function`
   - [ ] `test_db_curd.test_get_restaurant_randomly_with_open_time_function`
