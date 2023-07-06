@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 23:05:11
+LastEditTime: 2023-07-06 23:26:40
 Description: DataBase CRUD 單元測試
 '''
 
@@ -310,11 +310,21 @@ class TestUserCRUD(BaseDataBaseTestCase):
             db.execute(text("DELETE FROM user"))
             db.commit()
 
-    def test_get_user_function(self):
-        """測試取得 user"""
+    def test_get_user_with_username_function(self):
+        """測試使用 username 取得 user"""
 
         with self.fake_database.get_db() as db:
-            user = crud.get_user_not_oauth(db, self._fake_user_data["username"])
+            user = crud.get_user_with_username(db, self._fake_user_data["username"])
+
+            fake_user = self._get_user_obj(db)
+
+            self.assertEqual(user, fake_user)
+
+    def test_get_user_with_email_function(self):
+        """測試使用 email 取得 user"""
+
+        with self.fake_database.get_db() as db:
+            user = crud.get_user_with_email(db, self._fake_user_data["email"])
 
             fake_user = self._get_user_obj(db)
 

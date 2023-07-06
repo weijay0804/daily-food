@@ -1,8 +1,8 @@
 '''
 Author: andy
 Date: 2023-06-20 22:22:09
-LastEditors: andy
-LastEditTime: 2023-06-20 23:49:25
+LastEditors: weijay
+LastEditTime: 2023-07-06 23:24:18
 Description: 存放跟使用者認證相關的程式
 '''
 
@@ -23,7 +23,7 @@ def authenticate_user(db: Session, username: str, password: str) -> "OnReadNoOAu
     如果認證通過則回傳對應的物件，反之回傳 `False`
     """
 
-    user = crud.get_user_not_oauth(db, username)
+    user = crud.get_user_with_username(db, username)
 
     if not user:
         return False
