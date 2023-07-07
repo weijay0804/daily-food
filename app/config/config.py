@@ -29,7 +29,7 @@ class BaseConfig:
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
     JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
     JWT_TOKEN_EXPIRE_MIN = os.environ.get("JWT_TOKEN_EXPIRE_MIN", 15)
-
+    MAP_API_KEY = os.environ.get("MAP_API_KEY")
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True

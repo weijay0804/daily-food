@@ -18,7 +18,7 @@ from app.utils import MapApi
 class TestMapApi(unittest.TestCase):
     def setUp(self) -> None:
         os.environ.setdefault("MAP_API_KEY", "test_api_key")
-        self.map_api = MapApi()
+        self.map_api = MapApi("MAP")
 
     def test_get_coords_with_vaild_address(self):
         execpt_result = (25.03299, 121.5648)

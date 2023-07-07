@@ -20,12 +20,10 @@ class MapApi:
 
     BASE_URL = "https://www.mapquestapi.com/geocoding/v1"
 
-    def __init__(self):
+    def __init__(self,map_api_key):
         # 檢查是不是第一個實例化的
         if not hasattr(MapApi, "_first_init"):
             # 取得 api key
-            load_dotenv()
-            map_api_key = os.environ.get("MAP_API_KEY")
 
             if not map_api_key:
                 raise Exception("Can't load 'MAP_API_KEY' from .env file.")
@@ -34,7 +32,7 @@ class MapApi:
 
             MapApi._first_init = True
 
-    def __new__(cls):
+    def __new__(cls,*args):
         # 檢查之前有沒有實例化過，如果有直接回將該實例
         if not hasattr(MapApi, "_instance"):
             MapApi._instance = object.__new__(cls)

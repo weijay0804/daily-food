@@ -17,7 +17,7 @@ from app.database import crud
 from app.utils import MapApi
 from app.error_handle import ErrorHandler
 from app.routers.depends import get_db
-
+from app.config.config import BaseConfig
 
 router = APIRouter(prefix="/restaurant")
 
@@ -46,7 +46,7 @@ def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depe
                 ErrorHandler.raise_400("time format error, it should be %H:%M format.")
 
     # 使用第三方 Api 取得經緯度
-    lat, lng = MapApi().get_coords(items.address)
+    lat, lng = MapApi(BaseConfig.MAP_API_KEY).get_coords(items.address)
 
     full_item = database_schema.RestaurantDBModel(**items.dict(), lat=lat, lng=lng)
 
