@@ -21,6 +21,8 @@ from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
 from app.routers.depends import get_db
 
+ 
+ROOT_URL="/api/v1"
 
 class InitialTestClient(unittest.TestCase):
     @classmethod
@@ -40,7 +42,7 @@ class InitialTestClient(unittest.TestCase):
         cls.fake_database.engine.clear_compiled_cache()
         cls.fake_database.engine.dispose()
         cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
+        os.remove("test.db")        
 
 
 class TestResaurantRotuer(InitialTestClient):
@@ -60,7 +62,7 @@ class TestResaurantRotuer(InitialTestClient):
             db.add(restaurant)
             db.commit()
 
-        response = self.client.get("/api/v1/restaurant")
+        response = self.client.get(f"{ROOT_URL}/restaurant")
 
         data = response.json()["items"]
 
@@ -74,7 +76,7 @@ class TestResaurantRotuer(InitialTestClient):
     def test_create_restaurant_router(self, mock_get_coords):
         fake_restaurant = FakeData.fake_restaurant(is_lat_lng=False)
         response = self.client.post(
-            "/api/v1/restaurant",
+           f"{ROOT_URL}/restaurant",
             json=fake_restaurant,
         )
 
@@ -91,7 +93,7 @@ class TestResaurantRotuer(InitialTestClient):
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         response = self.client.patch(
-            f"/api/v1/restaurant/{restaurant.id}",
+            f"{ROOT_URL}/restaurant/{restaurant.id}",
             json={
                 "name": "測試餐廳更新",
             },
@@ -109,7 +111,7 @@ class TestResaurantRotuer(InitialTestClient):
         with self.fake_database.get_db() as db:
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
-        response = self.client.delete(f"/api/v1/restaurant/{restaurant.id}")
+        response = self.client.delete(f"{ROOT_URL}/restaurant/{restaurant.id}")
 
         self.assertEqual(response.status_code, 200)
 
@@ -144,7 +146,7 @@ class TestChoiceRestaurantRouter(InitialTestClient):
         distance = 5.0
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -155,7 +157,7 @@ class TestChoiceRestaurantRouter(InitialTestClient):
         self.assertEqual(len(response.json()['items']), 1)
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=2"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=2"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -193,7 +195,7 @@ class TestChoiceRestaurantRouter(InitialTestClient):
         current_time = open_time1.open_time.strftime("%H:%M")
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -232,7 +234,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
     def test_create_restaurant_open_time_router(self):
         items = FakeData.fake_restaurant_open_time(to_str=True, number=2)
         response = self.client.post(
-            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
+            f"{ROOT_URL}/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
         )
 
         self.assertEqual(response.status_code, 201)
@@ -253,7 +255,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
             db.refresh(db_open_time)
 
         response = self.client.patch(
-            f"/api/v1/restaurant/open_time/{db_open_time.id}",
+            f"{ROOT_URL}/restaurant/open_time/{db_open_time.id}",
             json={"day_of_week": 100},
         )
 
@@ -271,7 +273,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
             db.commit()
             db.refresh(db_open_time)
 
-        response = self.client.delete(f"/api/v1/restaurant/open_time/{db_open_time.id}")
+        response = self.client.delete(f"{ROOT_URL}/restaurant/open_time/{db_open_time.id}")
 
         self.assertEqual(response.status_code, 200)
 
@@ -289,7 +291,7 @@ class TestUserRouter(InitialTestClient):
         fake_data = FakeData.fake_user()
 
         response = self.client.post(
-            "/api/v1/user/",
+            f"{ROOT_URL}/user/",
             json={
                 "username": fake_data["username"],
                 "email": fake_data["email"],
@@ -312,7 +314,7 @@ class TestUserRouter(InitialTestClient):
             db.commit()
 
         response = self.client.post(
-            "/api/v1/user/token",
+          f"{ROOT_URL}/user/token",
             data={"username": fake_user["username"], "password": fake_user["password"]},
             headers={"WWW-Authenticate": "Bearer"},
         )
