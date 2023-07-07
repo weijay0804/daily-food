@@ -1,11 +1,6 @@
 name: Run Main Test
 
-on:
-  push:
-    branches: ["main", "dev"]
-
-  pull_request:
-    branches: ["main", "dev"]
+on: [push, pull_request]
 
 env:
   MAP_API_KEY: test_map_api_key
