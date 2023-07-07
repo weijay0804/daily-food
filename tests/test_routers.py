@@ -42,7 +42,7 @@ class InitialTestClient(unittest.TestCase):
         cls.fake_database.engine.clear_compiled_cache()
         cls.fake_database.engine.dispose()
         cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")        
+        os.remove("test.db")
 
 
 class TestResaurantRotuer(InitialTestClient):
