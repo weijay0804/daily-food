@@ -2,12 +2,11 @@
 Author: weijay
 Date: 2023-04-24 23:09:25
 LastEditors: weijay
-LastEditTime: 2023-06-30 02:05:30
+LastEditTime: 2023-07-07 20:35:11
 Description: 定義一些測試會用到的通用測試 case
 '''
 
 
-import os
 import unittest
 
 from tests.utils import FakeDataBase
@@ -30,4 +29,3 @@ class BaseDataBaseTestCase(unittest.TestCase):
         cls.fake_database.engine.clear_compiled_cache()
         cls.fake_database.engine.dispose()
         cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")

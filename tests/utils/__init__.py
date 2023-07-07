@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 17:19:24
 LastEditors: weijay
-LastEditTime: 2023-07-03 23:07:49
+LastEditTime: 2023-07-07 20:36:29
 Description: 放一些測試時會用到的通用函示
 '''
 
@@ -12,6 +12,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.database.model import Base
 
@@ -301,11 +302,15 @@ class FakeInitData:
 class FakeDataBase:
     """產生測試資料庫"""
 
-    SQLALCHEMY_DATABASE_URL = "sqlite:///test.db"
+    SQLALCHEMY_DATABASE_URL = "sqlite://"
 
     def __init__(self):
+        # 使用 `StaticPool` 來確保只會有一個連接對資料庫進行操作
+        # 確保每次使用 `SessionLocal` 時都是建立一個新連接，不會被其他測試影響
         self.engine = create_engine(
-            self.SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+            self.SQLALCHEMY_DATABASE_URL,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
         )
 
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)

@@ -2,12 +2,11 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-03 23:06:32
+LastEditTime: 2023-07-07 20:35:22
 Description: Api Router 單元測試
 '''
 
 
-import os
 import unittest
 from unittest import mock
 
@@ -21,8 +20,9 @@ from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
 from app.routers.depends import get_db
 
- 
-ROOT_URL="/api/v1"
+
+ROOT_URL = "/api/v1"
+
 
 class InitialTestClient(unittest.TestCase):
     @classmethod
@@ -42,7 +42,6 @@ class InitialTestClient(unittest.TestCase):
         cls.fake_database.engine.clear_compiled_cache()
         cls.fake_database.engine.dispose()
         cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
 
 
 class TestResaurantRotuer(InitialTestClient):
@@ -76,7 +75,7 @@ class TestResaurantRotuer(InitialTestClient):
     def test_create_restaurant_router(self, mock_get_coords):
         fake_restaurant = FakeData.fake_restaurant(is_lat_lng=False)
         response = self.client.post(
-           f"{ROOT_URL}/restaurant",
+            f"{ROOT_URL}/restaurant",
             json=fake_restaurant,
         )
 
@@ -314,7 +313,7 @@ class TestUserRouter(InitialTestClient):
             db.commit()
 
         response = self.client.post(
-          f"{ROOT_URL}/user/token",
+            f"{ROOT_URL}/user/token",
             data={"username": fake_user["username"], "password": fake_user["password"]},
             headers={"WWW-Authenticate": "Bearer"},
         )
