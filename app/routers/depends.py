@@ -1,8 +1,8 @@
 '''
 Author: andy
 Date: 2023-06-20 21:27:46
-LastEditors: andy
-LastEditTime: 2023-06-20 23:02:23
+LastEditors: weijay
+LastEditTime: 2023-07-06 23:23:03
 Description: 依賴項目
 '''
 
@@ -43,7 +43,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     except JWTError:
         CustomError.credentials_execption()
 
-    user = crud.get_user_not_oauth(db, token_data.username)
+    user = crud.get_user_with_username(db, token_data.username)
 
     if user is None:
         CustomError.credentials_execption()

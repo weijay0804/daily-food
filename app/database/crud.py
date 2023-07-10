@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 22:13:53
-LastEditors: andy
-LastEditTime: 2023-06-20 22:48:50
+LastEditors: weijay
+LastEditTime: 2023-07-06 23:27:16
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -258,10 +258,23 @@ def create_user_not_oauth(db: Session, user_data: database_schema.UserNotOAuthDB
     db.commit()
 
 
-def get_user_not_oauth(db: Session, username: str) -> "model.User":
-    """根據 `username` 取得資料庫對應的使用者"""
+def get_user_with_username(db: Session, username: str) -> "model.User":
+    """根據 `username` 取得資料庫對應的使用者
+
+    如果使用者不存在，回傳 `None`
+    """
 
     user = db.query(model.User).filter(model.User.username == username).first()
 
-    if user:
-        return user
+    return user
+
+
+def get_user_with_email(db: Session, email: str) -> "model.User":
+    """根據 `email` 取得資料庫對應的使用者
+
+    如果使用者不存在，回傳 `None`
+    """
+
+    user = db.query(model.User).filter(model.User.email == email).first()
+
+    return user

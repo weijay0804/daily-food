@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-07 20:35:22
+LastEditTime: 2023-07-10 21:18:11
 Description: Api Router 單元測試
 '''
 
@@ -299,6 +299,42 @@ class TestUserRouter(InitialTestClient):
         )
 
         self.assertEqual(response.status_code, 201)
+
+    def test_user_register_with_exist_username(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"],
+                "email": fake_data["email"] + "test",
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_user_register_with_exist_email(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"] + "test",
+                "email": fake_data["email"],
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
 
     def test_user_login(self):
         fake_user = FakeData.fake_user()
