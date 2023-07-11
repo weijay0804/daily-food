@@ -2,8 +2,8 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:57:57
-Description: 使用者路由
+LastEditTime: 2023-07-11 18:45:32
+Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
 from datetime import timedelta
@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import auth
-from app.schemas import user_schema, database_schema, auth_schema
-from app.database import crud
+from app.schemas import user_schema, database_schema, auth_schema, restaurant_schema
+from app.database import crud, model
 from app.routers.depends import get_db, get_current_user
 
 
@@ -55,3 +55,14 @@ def register(items: user_schema.OnCreateNoOAuthModel, db: Session = Depends(get_
     crud.create_user_not_oauth(db, database_schema.UserNotOAuthDBModel(**items.dict()))
 
     return {"message": "created."}
+
+
+@router.get("/restaurant", response_model=restaurant_schema.OnReadsModel)
+def read_user_restaurants(
+    db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
+):
+    """取得使用者儲存的所有餐廳 (需要使用者登入)"""
+
+    items = crud.get_restaurants_with_user(db, user.id)
+
+    return restaurant_schema.OnReadsModel(items=items)
