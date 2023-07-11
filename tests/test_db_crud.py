@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:26:40
+LastEditTime: 2023-07-11 17:34:45
 Description: DataBase CRUD 單元測試
 '''
 
@@ -113,6 +113,75 @@ class TestRestaurantCURD(BaseDataBaseTestCase):
             deleted_restaurant = crud.delete_restaurant(db, 1000)
 
         self.assertIsNone(deleted_restaurant)
+
+
+class TestUserRestaurantCRUD(BaseDataBaseTestCase):
+    """測試跟使用者對餐廳的 CRUD 操作相關的單元測試
+
+    跟 :class:`TestRestaurantCURD` 不同的是，這個是針對需要經過使用者認證後的餐廳操作。
+    """
+
+    def _get_db_user(self) -> "User":
+        """取得資料庫中的使用者物件 (這個主要是用來輔助單元測試用的)
+
+        Returns:
+            User: User ORM Model 實例
+        """
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+        return user
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """在這個測試 class 開始執行之前，先新增一個 user 資料進去資料庫"""
+
+        super().setUpClass()
+
+        fake_user = FakeInitData.fake_user()
+
+        db_user = User(**fake_user)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        cls.db_user_id = db_user.id
+
+    def tearDown(self) -> None:
+        """在每個測試結束時，清空 `restaurant` 資料表"""
+
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
+
+    def test_get_restaurants_with_user_function(self):
+        """測試 取得使用者收藏的餐廳列表 CRUD 功能
+
+        Ref: `app/database/crud/get_restaurants_with_user()`
+        """
+
+        with self.fake_database.get_db() as db:
+            items = crud.get_restaurants_with_user(db, self.db_user_id)
+
+            self.assertEqual(len(items), 0)
+
+        fake_restaurant = FakeData.fake_restaurant()
+
+        with self.fake_database.get_db() as db:
+            db_user = self._get_db_user()
+            db_restaurant = Restaurant(**fake_restaurant)
+            db_user.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            items = crud.get_restaurants_with_user(db, self.db_user_id)
+
+            self.assertEqual(len(items), 1)
 
 
 class TestChoiceRestaurantCURD(BaseDataBaseTestCase):

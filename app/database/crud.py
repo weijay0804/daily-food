@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:27:16
+LastEditTime: 2023-07-11 18:35:52
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -94,6 +94,14 @@ def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     """
 
     return db.query(model.Restaurant).offset(skip).limit(limit).all()
+
+
+def get_restaurants_with_user(db: Session, user_id: int):
+    """根據傳入的 `user_id` 取得對應的使用者收藏的餐廳列表"""
+
+    user = db.get(model.User, user_id)
+
+    return user.restaurants.all()
 
 
 def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel):
