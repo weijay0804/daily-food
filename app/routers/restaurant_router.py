@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 15:58:18
-LastEditors: andy
-LastEditTime: 2023-06-20 00:09:57
+LastEditors: weijay
+LastEditTime: 2023-07-03 22:59:35
 Description: 餐廳路由
 '''
 
@@ -13,23 +13,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.schemas import restaurant_schema, database_schema
-from app.database import SessionLocal
 from app.database import crud
 from app.utils import MapApi
 from app.error_handle import ErrorHandler
+from app.routers.depends import get_db
 
 
 router = APIRouter(prefix="/restaurant")
-
-
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
 
 
 @router.get("/", response_model=restaurant_schema.OnReadsModel)
@@ -89,6 +79,8 @@ def update_restaurant(
     restaurant_id: str, item: restaurant_schema.OnUpdateModel, db: Session = Depends(get_db)
 ):
     """更新餐廳"""
+
+    # TODO 這裡要檢查有沒有更改到 `address` ，如果有，要重新取得經緯度
 
     updated_restaurant = crud.update_restaurant(
         db, restaurant_id, database_schema.RestaurantUpdateDBModel(**item.dict())

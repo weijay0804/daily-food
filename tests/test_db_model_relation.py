@@ -1,38 +1,21 @@
 '''
 Author: weijay
 Date: 2023-06-04 15:24:07
-LastEditors: andy
-LastEditTime: 2023-06-11 23:11:51
+LastEditors: weijay
+LastEditTime: 2023-06-30 02:08:13
 Description: DataBase ORM 模型關聯性單元測試
 '''
 
-import os
-import unittest
 from typing import Tuple
 
 from sqlalchemy import text
 
 from app.database.model import Restaurant, RestaurantOpenTime, RestaurantType, User, OAuth
-from tests.utils import FakeDataBase, FakeData
+from tests import BaseDataBaseTestCase
+from tests.utils import FakeData
 
 
-class InitialDataBaseTest(unittest.TestCase):
-    """建立測試資料庫環境"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.fake_database = FakeDataBase()
-        cls.fake_database.Base.metadata.create_all(bind=cls.fake_database.engine)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.fake_database.engine.clear_compiled_cache()
-        cls.fake_database.engine.dispose()
-        cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
-
-
-class TestRestaurantAndOpneTimeRealtion(InitialDataBaseTest):
+class TestRestaurantAndOpneTimeRealtion(BaseDataBaseTestCase):
     """Restaurant model 與 RestaurantOpenTime model 一對多關聯性測試"""
 
     def _get_restaurant_obj(self, db) -> "Restaurant":
@@ -171,7 +154,7 @@ class TestRestaurantAndOpneTimeRealtion(InitialDataBaseTest):
             self.assertIn(new_open_time_obj2, new_restaurant_obj.open_times)
 
 
-class TestRestaurantAndRestaurantTypeRelation(InitialDataBaseTest):
+class TestRestaurantAndRestaurantTypeRelation(BaseDataBaseTestCase):
     """Restaurant model 與 RestaurantType model 多對多關聯性測試"""
 
     def _get_restaurant_objs(self, db) -> Tuple["Restaurant"]:
@@ -346,7 +329,7 @@ class TestRestaurantAndRestaurantTypeRelation(InitialDataBaseTest):
             self.assertNotIn(new_r_type_obj1, new_restaurant_obj1.types)
 
 
-class TestUserAndRestaurantRelation(InitialDataBaseTest):
+class TestUserAndRestaurantRelation(BaseDataBaseTestCase):
     """User model 與 Restaurant model 多對多關聯性測試"""
 
     def _get_restaurant_objs(self, db) -> Tuple["Restaurant"]:
@@ -509,7 +492,7 @@ class TestUserAndRestaurantRelation(InitialDataBaseTest):
             self.assertIn(new_u_obj2, new_r_obj2.users)
 
 
-class TestUserAndOAuthRelation(InitialDataBaseTest):
+class TestUserAndOAuthRelation(BaseDataBaseTestCase):
     """User model 與 OAuth model 一對一關聯性測試"""
 
     def _get_user_obj(self, db) -> "User":

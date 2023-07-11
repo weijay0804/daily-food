@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 20:34:28
 LastEditors: andy
-LastEditTime: 2023-06-10 13:54:20
+LastEditTime: 2023-06-20 02:26:36
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -24,8 +24,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from passlib.context import CryptContext
 
 Base = declarative_base()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # restaurant 與 restaurant_type 多對多中間表
 restaurant_type_intermediary_table = Table(
@@ -194,17 +197,16 @@ class User(Base):
     # 與 oauth table 建立一對一關係 ( 只有在 is_oauth = true 時會建立關係 )
     oauth = relationship("OAuth", uselist=False, back_populates="user", cascade="delete, delete")
 
-    def __init__(
-        self,
-        username: str,
-        email: str,
-        password_hash: Union[str, None] = None,
-        is_oauth: Union[bool, None] = False,
-    ):
-        self.username = username
-        self.email = email
-        self.password_hash = password_hash
-        self.is_oauth = is_oauth
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readablb attribute.')
+
+    @password.setter
+    def password(self, password: str):
+        self.password_hash = pwd_context.hash(password)
+
+    def verify_password(self, password: str) -> bool:
+        return pwd_context.verify(password, self.password_hash)
 
 
 class OAuth(Base):

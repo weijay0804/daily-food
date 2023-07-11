@@ -1,13 +1,12 @@
 '''
 Author: weijay
 Date: 2023-04-25 16:26:37
-LastEditors: andy
-LastEditTime: 2023-06-20 00:18:44
+LastEditors: weijay
+LastEditTime: 2023-07-10 22:04:03
 Description: Api Router 單元測試
 '''
 
 
-import os
 import unittest
 from unittest import mock
 
@@ -16,10 +15,13 @@ from sqlalchemy import text
 
 from app.config import config
 from app import create_app
-from app.database.model import Restaurant, RestaurantOpenTime
+from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.routers import register_router
 from tests.utils import FakeDataBase, FakeData
-from app.routers.restaurant_router import get_db
+from app.routers.depends import get_db
+
+
+ROOT_URL = "/api/v1"
 
 
 class InitialTestClient(unittest.TestCase):
@@ -40,7 +42,6 @@ class InitialTestClient(unittest.TestCase):
         cls.fake_database.engine.clear_compiled_cache()
         cls.fake_database.engine.dispose()
         cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
 
 
 class TestResaurantRotuer(InitialTestClient):
@@ -60,7 +61,7 @@ class TestResaurantRotuer(InitialTestClient):
             db.add(restaurant)
             db.commit()
 
-        response = self.client.get("/api/v1/restaurant")
+        response = self.client.get(f"{ROOT_URL}/restaurant")
 
         data = response.json()["items"]
 
@@ -74,7 +75,7 @@ class TestResaurantRotuer(InitialTestClient):
     def test_create_restaurant_router(self, mock_get_coords):
         fake_restaurant = FakeData.fake_restaurant(is_lat_lng=False)
         response = self.client.post(
-            "/api/v1/restaurant",
+            f"{ROOT_URL}/restaurant",
             json=fake_restaurant,
         )
 
@@ -91,7 +92,7 @@ class TestResaurantRotuer(InitialTestClient):
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
         response = self.client.patch(
-            f"/api/v1/restaurant/{restaurant.id}",
+            f"{ROOT_URL}/restaurant/{restaurant.id}",
             json={
                 "name": "測試餐廳更新",
             },
@@ -109,9 +110,21 @@ class TestResaurantRotuer(InitialTestClient):
         with self.fake_database.get_db() as db:
             restaurant = db.query(Restaurant).filter(Restaurant.name == fake_data["name"]).first()
 
-        response = self.client.delete(f"/api/v1/restaurant/{restaurant.id}")
+        response = self.client.delete(f"{ROOT_URL}/restaurant/{restaurant.id}")
 
         self.assertEqual(response.status_code, 200)
+
+
+class TestChoiceRestaurantRouter(InitialTestClient):
+    """隨機選擇餐廳路由測試"""
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
 
     def test_read_retaurant_randomly_router(self):
         inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
@@ -132,7 +145,7 @@ class TestResaurantRotuer(InitialTestClient):
         distance = 5.0
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -143,7 +156,7 @@ class TestResaurantRotuer(InitialTestClient):
         self.assertEqual(len(response.json()['items']), 1)
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=2"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=2"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -181,7 +194,7 @@ class TestResaurantRotuer(InitialTestClient):
         current_time = open_time1.open_time.strftime("%H:%M")
 
         response = self.client.get(
-            f"/api/v1/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+            f"{ROOT_URL}/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -220,7 +233,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
     def test_create_restaurant_open_time_router(self):
         items = FakeData.fake_restaurant_open_time(to_str=True, number=2)
         response = self.client.post(
-            f"/api/v1/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
+            f"{ROOT_URL}/restaurant/{self.fake_restaurant_id}/open_time", json={"items": items}
         )
 
         self.assertEqual(response.status_code, 201)
@@ -241,7 +254,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
             db.refresh(db_open_time)
 
         response = self.client.patch(
-            f"/api/v1/restaurant/open_time/{db_open_time.id}",
+            f"{ROOT_URL}/restaurant/open_time/{db_open_time.id}",
             json={"day_of_week": 100},
         )
 
@@ -259,6 +272,118 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
             db.commit()
             db.refresh(db_open_time)
 
-        response = self.client.delete(f"/api/v1/restaurant/open_time/{db_open_time.id}")
+        response = self.client.delete(f"{ROOT_URL}/restaurant/open_time/{db_open_time.id}")
 
         self.assertEqual(response.status_code, 200)
+
+
+class TestUserRouter(InitialTestClient):
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM user"))
+            db.commit()
+
+    def test_user_register(self):
+        fake_data = FakeData.fake_user()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/",
+            json={
+                "username": fake_data["username"],
+                "email": fake_data["email"],
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_user_register_with_exist_username(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"],
+                "email": fake_data["email"] + "test",
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_user_register_with_exist_email(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"] + "test",
+                "email": fake_data["email"],
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_user_login(self):
+        fake_user = FakeData.fake_user()
+        db_user = User(
+            username=fake_user["username"],
+            email=fake_user["email"],
+            password=fake_user["password"],
+        )
+
+        with self.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/token",
+            data={"username": fake_user["username"], "password": fake_user["password"]},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.json().get("access_token"))
+        self.assertEqual(response.json().get("token_type"), "bearer")
+
+    def test_user_login_with_invalid_username(self):
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_user))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/token",
+            data={"username": fake_user["username"] + "test", "password": fake_user["password"]},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_user_login_with_invalid_password(self):
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_user))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/token",
+            data={"username": fake_user["username"], "password": fake_user["password"] + "test"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 401)

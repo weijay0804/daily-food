@@ -1,12 +1,16 @@
 '''
 Author: weijay
 Date: 2023-04-24 16:13:51
-LastEditors: weijay
-LastEditTime: 2023-04-24 16:54:20
+LastEditors: andy
+LastEditTime: 2023-06-20 22:19:28
 Description: Api 環境設定
 '''
 
 import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__name__))
 
@@ -22,6 +26,9 @@ class BaseConfig:
     DEBUG = False
     TITLE = "Daily Food"
     API_DESC = API_DESC
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
+    JWT_TOKEN_EXPIRE_MIN = os.environ.get("JWT_TOKEN_EXPIRE_MIN", 15)
 
 
 class DevelopmentConfig(BaseConfig):

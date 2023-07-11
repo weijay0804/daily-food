@@ -1,40 +1,21 @@
 '''
 Author: weijay
 Date: 2023-05-15 22:05:37
-LastEditors: andy
-LastEditTime: 2023-06-20 00:18:29
+LastEditors: weijay
+LastEditTime: 2023-07-06 23:26:40
 Description: DataBase CRUD 單元測試
 '''
-
-import os
-import unittest
-import datetime
 
 from sqlalchemy import text
 
 from app.schemas import database_schema
-from app.database.model import Restaurant, RestaurantOpenTime
+from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.database import crud
-from tests.utils import FakeData, FakeDataBase
+from tests import BaseDataBaseTestCase
+from tests.utils import FakeData, FakeInitData
 
 
-class InitialDataBaseTest(unittest.TestCase):
-    """建立測試資料庫環境"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.fake_database = FakeDataBase()
-        cls.fake_database.Base.metadata.create_all(bind=cls.fake_database.engine)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.fake_database.engine.clear_compiled_cache()
-        cls.fake_database.engine.dispose()
-        cls.fake_database.Base.metadata.drop_all(bind=cls.fake_database.engine)
-        os.remove("test.db")
-
-
-class TestRestaurantCURD(InitialDataBaseTest):
+class TestRestaurantCURD(BaseDataBaseTestCase):
     def _get_restaurant_obj(self, db) -> "Restaurant":
         r_obj = (
             db.query(Restaurant)
@@ -47,13 +28,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
     def setUp(self) -> None:
         """先新增資料進去"""
 
-        # NOTE 如果之後 Restaurant 有做更改的話，要檢查一下這邊
-        self._fake_restaurant_data = {
-            "name": "test_restaurant",
-            "address": "test_address",
-            "lat": 23.001,
-            "lng": 120.001,
-        }
+        self._fake_restaurant_data = FakeInitData.fake_restaurant()
 
         fake_restaurant = Restaurant(**self._fake_restaurant_data)
 
@@ -139,6 +114,15 @@ class TestRestaurantCURD(InitialDataBaseTest):
 
         self.assertIsNone(deleted_restaurant)
 
+
+class TestChoiceRestaurantCURD(BaseDataBaseTestCase):
+    """隨機選擇餐廳 CURD 功能測試"""
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.commit()
+
     def test_get_restaurant_randomly_function(self):
         fake_inner_data = FakeData.fake_restaurant()
         fake_outer_data = FakeData.fake_restaurant_far()
@@ -204,7 +188,7 @@ class TestRestaurantCURD(InitialDataBaseTest):
             )
 
 
-class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
+class TestRestaurantOpenTimeCRUD(BaseDataBaseTestCase):
     def _get_restaurant_obj(self, db) -> "Restaurant":
         r_obj = db.query(Restaurant).filter(Restaurant.name == self.fake_data["name"]).first()
 
@@ -236,11 +220,7 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
     def setUp(self) -> None:
         """先新增資料"""
 
-        self._fake_open_time_data = {
-            "day_of_week": 100,
-            "open_time": datetime.time(hour=8, minute=0),
-            "close_time": datetime.time(hour=22, minute=0),
-        }
+        self._fake_open_time_data = FakeInitData.fake_restaurant_open_time()
 
         with self.fake_database.get_db() as db:
             r_obj = self._get_restaurant_obj(db)
@@ -304,3 +284,67 @@ class TestRestaurantOpenTimeCRUD(InitialDataBaseTest):
 
         self.assertIsNotNone(open_time)
         self.assertIsNone(delete_open_time_obj)
+
+
+class TestUserCRUD(BaseDataBaseTestCase):
+    def _get_user_obj(self, db) -> "User":
+        user = db.query(User).filter(User.username == self._fake_user_data["username"]).first()
+
+        return user
+
+    def setUp(self) -> None:
+        """先新增資料進去"""
+
+        self._fake_user_data = FakeInitData.fake_user()
+
+        fake_user = User(**self._fake_user_data)
+
+        with self.fake_database.get_db() as db:
+            db.add(fake_user)
+            db.commit()
+
+    def tearDown(self) -> None:
+        """清理資料"""
+
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM user"))
+            db.commit()
+
+    def test_get_user_with_username_function(self):
+        """測試使用 username 取得 user"""
+
+        with self.fake_database.get_db() as db:
+            user = crud.get_user_with_username(db, self._fake_user_data["username"])
+
+            fake_user = self._get_user_obj(db)
+
+            self.assertEqual(user, fake_user)
+
+    def test_get_user_with_email_function(self):
+        """測試使用 email 取得 user"""
+
+        with self.fake_database.get_db() as db:
+            user = crud.get_user_with_email(db, self._fake_user_data["email"])
+
+            fake_user = self._get_user_obj(db)
+
+            self.assertEqual(user, fake_user)
+
+    def test_create_user_function(self):
+        """測試新增 user"""
+
+        fake_user_date = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            crud.create_user_not_oauth(
+                db,
+                database_schema.UserNotOAuthDBModel(
+                    username=fake_user_date["username"],
+                    email=fake_user_date["email"],
+                    password=fake_user_date["password"],
+                ),
+            )
+
+            user = db.query(User).filter(User.username == fake_user_date["username"]).first()
+
+            self.assertIsNotNone(user)

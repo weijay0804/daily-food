@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-27 14:59:26
 LastEditors: weijay
-LastEditTime: 2023-06-04 21:30:38
+LastEditTime: 2023-07-03 23:07:56
 Description: 測試資料
 '''
 
@@ -63,7 +63,7 @@ class FakeRestaurantType:
 class FakeUser:
     USERNAME = ["user1", "user2", "user3", "user4"]
     EMAIL = ["user1@test.com", "user2@test.com", "user3@test.com", "user4@test.com"]
-    PASSWORD_HASH = ["user1_hash", "user2_hash", "user3_hash", "user4_hash"]
+    PASSWORD = ["user1_password", "user2_password", "user3_password", "user4_password"]
 
 
 class FakeOAuth:

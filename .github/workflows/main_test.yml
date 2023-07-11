@@ -1,0 +1,40 @@
+name: Run Main Test
+
+on:
+  push:
+    branches:
+      - "main"
+      - "dev"
+
+  pull_request:
+    branches:
+      - "main"
+      - "dev"
+
+env:
+  MAP_API_KEY: test_map_api_key
+  JWT_SECRET_KEY: 6b17073ec9d05a41fb6925190809a27ebdc09b72fbd0033e58496620ced11866
+
+jobs:
+  run-test:
+    name: Run Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
+
+      - name: Run test
+        run: |
+          python -B -m pytest
