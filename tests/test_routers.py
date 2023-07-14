@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-11 18:45:11
+LastEditTime: 2023-07-14 15:19:30
 Description: Api Router 單元測試
 '''
 
@@ -427,6 +427,7 @@ class TestUserRestaurantRouter(InitialTestClient):
     def tearDown(self) -> None:
         with self.fake_database.get_db() as db:
             db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
             db.commit()
 
     def test_read_user_restaurants_router(self):
@@ -457,3 +458,27 @@ class TestUserRestaurantRouter(InitialTestClient):
 
         for r_data in response.json()["items"]:
             self.assertIn(r_data["id"], user_restaurant_set)
+
+    # 使用 測試方法層面 mock 直接替換掉 get_coords()
+    @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))
+    def test_create_user_restaurant_router(self, mock_get_coords):
+        """測試 建立使用者餐廳資料路由
+
+        Ref: `app/routers/user_router/create_user_restaurant()`
+        """
+
+        fake_restaurant = FakeData.fake_restaurant()
+
+        with self.fake_database.get_db() as db:
+            db_restaurants = db.get(User, self.db_user_id).restaurants.all()
+
+            self.assertEqual(len(db_restaurants), 0)
+
+        response = self.client.post(f"{ROOT_URL}/user/restaurant", json=fake_restaurant)
+
+        self.assertEqual(response.status_code, 201)
+
+        with self.fake_database.get_db() as db:
+            db_restaurants = db.get(User, self.db_user_id).restaurants.all()
+
+            self.assertEqual(len(db_restaurants), 1)
