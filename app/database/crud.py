@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-11 18:35:52
+LastEditTime: 2023-07-14 15:13:11
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -115,6 +115,38 @@ def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel
         phone=restaurant.phone,
     )
 
+    db.add(db_restaurant)
+    db.commit()
+    db.refresh(db_restaurant)
+
+    return db_restaurant
+
+
+def create_restaurant_with_user(
+    db: Session, restaurant: database_schema.RestaurantDBModel, user_id: int
+) -> "model.Restaurant":
+    """建立使用者的餐廳資料
+
+    Args:
+        db (Session): sessinmaker 實例
+        restaurant (database_schema.RestaurantDBModel): 餐廳資料
+        user_id (int): 使用者 ID 值
+
+    Returns:
+        model.Restaurant: 根據這個資料建立的資料庫餐廳模型實例
+    """
+
+    user = db.get(model.User, user_id)
+
+    db_restaurant = model.Restaurant(
+        name=restaurant.name,
+        address=restaurant.address,
+        lat=restaurant.lat,
+        lng=restaurant.lng,
+        phone=restaurant.phone,
+    )
+
+    user.restaurants.append(db_restaurant)
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)

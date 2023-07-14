@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-11 17:34:45
+LastEditTime: 2023-07-14 15:42:55
 Description: DataBase CRUD 單元測試
 '''
 
@@ -155,6 +155,7 @@ class TestUserRestaurantCRUD(BaseDataBaseTestCase):
 
         with self.fake_database.get_db() as db:
             db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
             db.commit()
 
     def test_get_restaurants_with_user_function(self):
@@ -182,6 +183,32 @@ class TestUserRestaurantCRUD(BaseDataBaseTestCase):
             items = crud.get_restaurants_with_user(db, self.db_user_id)
 
             self.assertEqual(len(items), 1)
+
+    def test_create_restaurant_with_user_function(self):
+        """測試 建立使用者餐廳 功能
+
+        Ref: `app/database/crud/create_restaurant_with_user()`
+        """
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            self.assertEqual(len(user.restaurants.all()), 0)
+
+        fake_restaurant = FakeData.fake_restaurant()
+
+        with self.fake_database.get_db() as db:
+            crud.create_restaurant_with_user(
+                db, database_schema.RestaurantDBModel(**fake_restaurant), self.db_user_id
+            )
+
+            user = db.get(User, self.db_user_id)
+
+            user_restaurants = user.restaurants.all()
+
+            self.assertEqual(len(user_restaurants), 1)
+            self.assertEqual(user_restaurants[0].name, fake_restaurant["name"])
+            self.assertEqual(user_restaurants[0].address, fake_restaurant["address"])
 
 
 class TestChoiceRestaurantCURD(BaseDataBaseTestCase):
