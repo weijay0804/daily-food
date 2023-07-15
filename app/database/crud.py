@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-14 15:13:11
+LastEditTime: 2023-07-14 18:31:17
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -82,6 +82,30 @@ def delete_restaurant_open_time(db: Session, open_time_id: int):
     db.commit()
 
     return open_time
+
+
+def check_is_user_restaurant(db: Session, user_id: int, restaurant_id: int) -> bool:
+    """檢查傳入的 `restaurant_id` 是否屬於 `user_id`
+
+    Args:
+        db (Session): sessionmaker 實例
+
+        user_id (int): 使用者 ID 值
+
+        restaurant_id (int): 餐廳 ID 值
+
+    Returns:
+        bool: 如果是，回傳 `True` 反之，回傳 `False`
+    """
+
+    user = db.get(model.User, user_id)
+
+    restaurant_list = user.restaurants.all()
+
+    if restaurant_id not in set([r.id for r in restaurant_list]):
+        return False
+
+    return True
 
 
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):

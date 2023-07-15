@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-14 15:42:55
+LastEditTime: 2023-07-14 18:30:16
 Description: DataBase CRUD 單元測試
 '''
 
@@ -157,6 +157,33 @@ class TestUserRestaurantCRUD(BaseDataBaseTestCase):
             db.execute(text("DELETE FROM restaurant"))
             db.execute(text("DELETE FROM user_restaurant_intermediary"))
             db.commit()
+
+    def test_check_is_user_restaurant(self):
+        """測試 餐廳是否屬於使用者的檢查功能
+
+        Ref: `app/database/crud/check_is_user_restaurant()`
+        """
+
+        # 先新增資料
+        fake_restaurant = FakeData.fake_restaurant()
+
+        with self.fake_database.get_db() as db:
+            db_user = self._get_db_user()
+            db_restaurant = Restaurant(**fake_restaurant)
+
+            db_user.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+            result = crud.check_is_user_restaurant(db, self.db_user_id, db_restaurant.id)
+
+            self.assertTrue(result)
+
+            result = crud.check_is_user_restaurant(db, self.db_user_id, 100)
+
+            self.assertFalse(result)
 
     def test_get_restaurants_with_user_function(self):
         """測試 取得使用者收藏的餐廳列表 CRUD 功能
