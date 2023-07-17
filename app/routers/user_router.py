@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-14 15:13:42
+LastEditTime: 2023-07-17 15:00:31
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -115,3 +115,26 @@ def create_user_restaurant(
         crud.create_restaurant_open_times(db, r.id, db_open_times)
 
     return {"message": "created."}
+
+
+@router.patch("/restaurant/{restaurant_id}")
+def update_user_restaurant(
+    restaurant_id: int,
+    item: restaurant_schema.OnUpdateModel,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
+):
+    """更新使用者餐廳資料"""
+
+    # 身份確認
+    if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
+        raise HTTPException(403)
+
+    updated_restaurant = crud.update_restaurant(
+        db, restaurant_id, database_schema.RestaurantUpdateDBModel(**item.dict())
+    )
+
+    if not updated_restaurant:
+        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
+
+    return {"message": "ok"}

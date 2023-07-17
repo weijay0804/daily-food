@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-14 15:19:30
+LastEditTime: 2023-07-17 15:02:58
 Description: Api Router 單元測試
 '''
 
@@ -482,3 +482,63 @@ class TestUserRestaurantRouter(InitialTestClient):
             db_restaurants = db.get(User, self.db_user_id).restaurants.all()
 
             self.assertEqual(len(db_restaurants), 1)
+
+    def test_update_user_restaurant_router(self):
+        """測試 更新使用者餐廳路由
+
+        Ref: `app/routers/user_router/update_user_restaurant()`
+        """
+
+        def _inner_get_user(user_id):
+            def wrap():
+                with self.fake_database.get_db() as db:
+                    user = db.get(User, user_id)
+                return user
+
+            return wrap
+
+        fake_restaurant = FakeData.fake_restaurant()
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = Restaurant(**fake_restaurant)
+            db_user2 = User(**fake_user)
+
+            db_user1 = db.get(User, self.db_user_id)
+
+            db_user1.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.add(db_user2)
+            db.commit()
+
+            db.refresh(db_restaurant)
+            db.refresh(db_user1)
+
+            restaurant = db_user1.restaurants.all()[0]
+
+            db_user2_id = db_user2.id
+
+            self.assertEqual(restaurant.name, fake_restaurant["name"])
+
+        # 測試正確的使用者
+        response = self.client.patch(
+            f"{ROOT_URL}/user/restaurant/{db_restaurant.id}", json={"name": "update"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_user1 = db.get(User, self.db_user_id)
+
+            self.assertEqual(db_user1.restaurants.all()[0].name, "update")
+
+        # 測試錯誤的使用者
+        self.test_app.dependency_overrides[get_current_user] = _inner_get_user(db_user2_id)
+
+        # 測試正確的使用者
+        response = self.client.patch(
+            f"{ROOT_URL}/user/restaurant/{db_restaurant.id}", json={"name": "update"}
+        )
+
+        self.assertEqual(response.status_code, 403)
