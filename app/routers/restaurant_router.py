@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:59:35
+LastEditTime: 2023-07-11 15:34:36
 Description: 餐廳路由
 '''
 
@@ -31,6 +31,9 @@ def read_restaurants(db: Session = Depends(get_db)):
     return restaurant_schema.OnReadsModel(items=items)
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 POST `/user/restaurant`
 @router.post("/", status_code=201)
 def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depends(get_db)):
     """新增餐廳"""
@@ -74,6 +77,9 @@ def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depe
     return {"message": "created."}
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 PATCH `/user/restaurant`
 @router.patch("/{restaurant_id}", status_code=200)
 def update_restaurant(
     restaurant_id: str, item: restaurant_schema.OnUpdateModel, db: Session = Depends(get_db)
@@ -92,6 +98,9 @@ def update_restaurant(
     return {"message": "updated."}
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 DELETE `/user/restaurant`
 @router.delete("/{restaurant_id}", status_code=200)
 def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     """刪除餐廳"""
@@ -104,6 +113,9 @@ def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 POST `/user/restaurant/<restaurant_id>/open_time`
 @router.post("/{restaurant_id}/open_time", status_code=201)
 def create_restaurnt_open_time(
     restaurant_id: int,
@@ -120,6 +132,9 @@ def create_restaurnt_open_time(
     return {"message": "created."}
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 PATCH `/user/restaurant/<restaurant_id>/open_time/<open_time_id>`
 @router.patch(
     "/open_time/{open_time_id}",
     status_code=200,
@@ -138,6 +153,9 @@ def update_restauarnt_open_time(
     return {"message": "updated."}
 
 
+# TODO 這個要移動到 `../user_router.py` 中
+# 因為這個需要使用者認證後才能操作
+# api endpoint 應該變成 DELETE `/user/restaurant/<restaurant_id>/open_time/<open_time_id>`
 @router.delete("/open_time/{open_time_id}", status_code=200)
 def delete_restaurant_open_time(open_time_id: int, db: Session = Depends(get_db)):
     deleted_open_time = crud.delete_restaurant_open_time(db, open_time_id)
@@ -148,6 +166,8 @@ def delete_restaurant_open_time(open_time_id: int, db: Session = Depends(get_db)
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
 
+# TODO 這個要複製一份到 `../user_router.py` 中
+# 在 `../user_rotuer.py` 中的，只會推薦給使用者儲存的餐廳
 @router.get("/choice", response_model=restaurant_schema.OnReadsModel)
 def read_restaurant_randomly(
     lat: float = Query(default=..., description="所在位置的緯度值"),

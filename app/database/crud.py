@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:27:16
+LastEditTime: 2023-07-14 18:31:17
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -84,6 +84,30 @@ def delete_restaurant_open_time(db: Session, open_time_id: int):
     return open_time
 
 
+def check_is_user_restaurant(db: Session, user_id: int, restaurant_id: int) -> bool:
+    """檢查傳入的 `restaurant_id` 是否屬於 `user_id`
+
+    Args:
+        db (Session): sessionmaker 實例
+
+        user_id (int): 使用者 ID 值
+
+        restaurant_id (int): 餐廳 ID 值
+
+    Returns:
+        bool: 如果是，回傳 `True` 反之，回傳 `False`
+    """
+
+    user = db.get(model.User, user_id)
+
+    restaurant_list = user.restaurants.all()
+
+    if restaurant_id not in set([r.id for r in restaurant_list]):
+        return False
+
+    return True
+
+
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     """取得餐廳資料
 
@@ -94,6 +118,14 @@ def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     """
 
     return db.query(model.Restaurant).offset(skip).limit(limit).all()
+
+
+def get_restaurants_with_user(db: Session, user_id: int):
+    """根據傳入的 `user_id` 取得對應的使用者收藏的餐廳列表"""
+
+    user = db.get(model.User, user_id)
+
+    return user.restaurants.all()
 
 
 def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel):
@@ -107,6 +139,38 @@ def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel
         phone=restaurant.phone,
     )
 
+    db.add(db_restaurant)
+    db.commit()
+    db.refresh(db_restaurant)
+
+    return db_restaurant
+
+
+def create_restaurant_with_user(
+    db: Session, restaurant: database_schema.RestaurantDBModel, user_id: int
+) -> "model.Restaurant":
+    """建立使用者的餐廳資料
+
+    Args:
+        db (Session): sessinmaker 實例
+        restaurant (database_schema.RestaurantDBModel): 餐廳資料
+        user_id (int): 使用者 ID 值
+
+    Returns:
+        model.Restaurant: 根據這個資料建立的資料庫餐廳模型實例
+    """
+
+    user = db.get(model.User, user_id)
+
+    db_restaurant = model.Restaurant(
+        name=restaurant.name,
+        address=restaurant.address,
+        lat=restaurant.lat,
+        lng=restaurant.lng,
+        phone=restaurant.phone,
+    )
+
+    user.restaurants.append(db_restaurant)
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)
