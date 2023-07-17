@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-17 15:39:06
+LastEditTime: 2023-07-18 00:57:16
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -155,3 +155,23 @@ def delete_user_restaurant(
         ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
     return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
+
+
+@router.post("/restaurant/{restaurant_id}/open_time", status_code=201)
+def create_user_restaurant_open_time(
+    restaurant_id: int,
+    open_times: restaurant_schema.OnCreateOpenTimeModel,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
+):
+    if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
+        raise HTTPException(403)
+
+    open_times_obj = [
+        database_schema.RestaurantOpenTimeDBModel(**open_time.dict())
+        for open_time in open_times.items
+    ]
+
+    crud.create_restaurant_open_times(db, restaurant_id, open_times_obj)
+
+    return {"message": "created."}
