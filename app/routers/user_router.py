@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-17 15:00:31
+LastEditTime: 2023-07-17 15:39:06
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -138,3 +138,20 @@ def update_user_restaurant(
         ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
 
     return {"message": "ok"}
+
+
+@router.delete("/restaurant/{restaurant_id}")
+def delete_user_restaurant(
+    restaurant_id: int, db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
+):
+    """刪除使用者餐廳"""
+
+    if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
+        raise HTTPException(403)
+
+    deleted_restaurant = crud.delete_restaurant(db, restaurant_id)
+
+    if not deleted_restaurant:
+        ErrorHandler.raise_404(f"The restaurant ID: {restaurant_id} is not founded in database.")
+
+    return {"message": f"Restaurant ID {deleted_restaurant.id} has been deleted."}
