@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-18 00:57:16
+LastEditTime: 2023-07-18 01:46:15
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -175,3 +175,26 @@ def create_user_restaurant_open_time(
     crud.create_restaurant_open_times(db, restaurant_id, open_times_obj)
 
     return {"message": "created."}
+
+
+@router.patch("/restaurant/{restaurant_id}/open_time/{open_time_id}")
+def update_user_restaurant_open_time(
+    restaurant_id: int,
+    open_time_id: int,
+    item: restaurant_schema.OnUpadteOpenTimeModel,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
+):
+    """更新使用者餐廳營業時間"""
+
+    if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
+        raise HTTPException(403)
+
+    updated_open_time = crud.update_restaurant_open_time(
+        db, open_time_id, database_schema.RestaurantOpenTimeUpdateDBModel(**item.dict())
+    )
+
+    if not updated_open_time:
+        ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founded in database.")
+
+    return {"message", "updated."}
