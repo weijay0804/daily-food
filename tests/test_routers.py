@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-19 00:27:30
+LastEditTime: 2023-07-19 00:41:18
 Description: Api Router 單元測試
 '''
 
@@ -745,3 +745,34 @@ class TestUserRestaurantOpenTimeRouter(InitialTestClient):
             self.assertEqual(db_open_time.day_of_week, 10)
             self.assertEqual(db_open_time.open_time, fake_open_time["open_time"])
             self.assertEqual(db_open_time.close_time, fake_open_time["close_time"])
+
+    def test_delete_user_restaurant_open_time_router(self):
+        """測試 刪除使用者餐廳營業時間路由"""
+
+        fake_open_time = FakeData.fake_restaurant_open_time()
+        db_open_time_id = None
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            db_open_time = RestaurantOpenTime(**fake_open_time)
+            db_restaurant.open_times.append(db_open_time)
+
+            db.add(db_open_time)
+            db.commit()
+            db.refresh(db_open_time)
+
+            db_open_time_id = db_open_time.id
+
+            self.assertEqual(len(db_restaurant.open_times), 1)
+
+        response = self.client.delete(
+            f"{ROOT_URL}/user/restaurant/{self.db_restaurant_id}/open_time/{db_open_time_id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            self.assertEqual(len(db_restaurant.open_times), 0)
