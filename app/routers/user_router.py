@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-19 00:36:09
+LastEditTime: 2023-07-19 01:36:52
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -197,7 +197,7 @@ def update_user_restaurant_open_time(
     if not updated_open_time:
         ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founded in database.")
 
-    return {"message", "updated."}
+    return {"message": "updated."}
 
 
 @router.delete("/restaurant/{restaurant_id}/open_time/{open_time_id}")
