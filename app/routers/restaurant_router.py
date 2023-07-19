@@ -24,7 +24,7 @@ router = APIRouter(prefix="/restaurant")
 
 @router.get("/", response_model=restaurant_schema.OnReadsModel)
 def read_restaurants(db: Session = Depends(get_db)):
-    """取得所有餐廳"""
+    """取得所有餐廳列表"""
 
     items = crud.get_restaurants(db)
 
@@ -33,7 +33,7 @@ def read_restaurants(db: Session = Depends(get_db)):
 
 @router.post("/", status_code=201)
 def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depends(get_db)):
-    """新增餐廳"""
+    """新增一個餐廳資料"""
 
     # 檢查傳入的 open_time 中的 time 格式
     if items.open_times is not None:
@@ -78,7 +78,7 @@ def create_restaurant(items: restaurant_schema.OnCreateModel, db: Session = Depe
 def update_restaurant(
     restaurant_id: str, item: restaurant_schema.OnUpdateModel, db: Session = Depends(get_db)
 ):
-    """更新餐廳"""
+    """更新指定 ID 的的餐廳資料"""
 
     # TODO 這裡要檢查有沒有更改到 `address` ，如果有，要重新取得經緯度
 
@@ -94,7 +94,7 @@ def update_restaurant(
 
 @router.delete("/{restaurant_id}", status_code=200)
 def delete_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
-    """刪除餐廳"""
+    """刪除指定 ID 的餐廳資料"""
 
     deleted_restaurant = crud.delete_restaurant(db, restaurant_id)
 
@@ -110,6 +110,8 @@ def create_restaurnt_open_time(
     open_times: restaurant_schema.OnCreateOpenTimeModel,
     db: Session = Depends(get_db),
 ):
+    """建立一個指定 ID 的餐聽營業時間"""
+
     open_times_obj = [
         database_schema.RestaurantOpenTimeDBModel(**open_time.dict())
         for open_time in open_times.items
@@ -129,6 +131,8 @@ def update_restauarnt_open_time(
     item: restaurant_schema.OnUpadteOpenTimeModel,
     db: Session = Depends(get_db),
 ):
+    """更新一個指定 ID 的餐廳營業時間"""
+
     db_update_obj = database_schema.RestaurantOpenTimeUpdateDBModel(**item.dict(exclude_unset=True))
     updated_open_time = crud.update_restaurant_open_time(db, open_time_id, db_update_obj)
 
@@ -140,6 +144,8 @@ def update_restauarnt_open_time(
 
 @router.delete("/open_time/{open_time_id}", status_code=200)
 def delete_restaurant_open_time(open_time_id: int, db: Session = Depends(get_db)):
+    """刪除一個指定 ID 的餐廳營業時間"""
+
     deleted_open_time = crud.delete_restaurant_open_time(db, open_time_id)
 
     if not deleted_open_time:
@@ -160,7 +166,7 @@ def read_restaurant_randomly(
     limit: Union[int, None] = Query(default=1, ge=1, le=10, description="一次回傳的最大的餐廳數量"),
     db: Session = Depends(get_db),
 ):
-    """隨機取得範圍內的餐廳ㄧ"""
+    """隨機取得範圍內的餐廳"""
 
     if day_of_week and current_time:
         random_restaurants = crud.get_restaurant_randomly_with_open_time(

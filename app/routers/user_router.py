@@ -25,6 +25,8 @@ router = APIRouter(prefix="/user")
 
 @router.post("/token", response_model=auth_schema.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """使用者登入,會回傳一個 access token """
+
     user = auth.authenticate_user(db, form_data.username, form_data.password)
 
     if not user:
@@ -44,6 +46,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.post("/", status_code=201)
 def register(items: user_schema.OnCreateNoOAuthModel, db: Session = Depends(get_db)):
+    """使用者註冊"""
+    
     user = crud.get_user_with_username(db, items.username)
 
     if user:
@@ -76,7 +80,7 @@ def create_user_restaurant(
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
 ):
-    """新增餐廳"""
+    """使用者新增餐廳"""
 
     # 檢查傳入的 open_time 中的 time 格式
     if items.open_times is not None:
@@ -144,7 +148,7 @@ def update_user_restaurant(
 def delete_user_restaurant(
     restaurant_id: int, db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
 ):
-    """刪除使用者餐廳"""
+    """刪除使用者指定 ID 餐廳"""
 
     if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
         raise HTTPException(403)
@@ -164,6 +168,8 @@ def create_user_restaurant_open_time(
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
 ):
+    """更新使用者指定 ID 餐廳"""
+
     if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
         raise HTTPException(403)
 
@@ -185,7 +191,7 @@ def update_user_restaurant_open_time(
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
 ):
-    """更新使用者餐廳營業時間"""
+    """更新使用者指定餐廳 ID 營業時間"""
 
     if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
         raise HTTPException(403)
@@ -207,7 +213,7 @@ def delete_user_restaurant_open_time(
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
 ):
-    """刪除使用者餐廳營業時間"""
+    """刪除使用者指定 ID 餐廳營業時間"""
 
     if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
         raise HTTPException(403)
