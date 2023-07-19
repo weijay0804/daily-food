@@ -1,8 +1,8 @@
 '''
 Author: andy
 Date: 2023-06-20 02:30:07
-LastEditors: andy
-LastEditTime: 2023-06-21 00:34:01
+LastEditors: weijay
+LastEditTime: 2023-07-06 23:57:57
 Description: 使用者路由
 '''
 
@@ -42,6 +42,16 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.post("/", status_code=201)
 def register(items: user_schema.OnCreateNoOAuthModel, db: Session = Depends(get_db)):
+    user = crud.get_user_with_username(db, items.username)
+
+    if user:
+        raise HTTPException(409, "username or email is exist.")
+
+    user = crud.get_user_with_email(db, items.email)
+
+    if user:
+        raise HTTPException(409, "username or email is exist.")
+
     crud.create_user_not_oauth(db, database_schema.UserNotOAuthDBModel(**items.dict()))
 
     return {"message": "created."}

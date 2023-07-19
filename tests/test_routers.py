@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-07 20:35:22
+LastEditTime: 2023-07-10 22:04:03
 Description: Api Router 單元測試
 '''
 
@@ -300,6 +300,42 @@ class TestUserRouter(InitialTestClient):
 
         self.assertEqual(response.status_code, 201)
 
+    def test_user_register_with_exist_username(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"],
+                "email": fake_data["email"] + "test",
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_user_register_with_exist_email(self):
+        fake_data = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_data))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user",
+            json={
+                "username": fake_data["username"] + "test",
+                "email": fake_data["email"],
+                "password": fake_data["password"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+
     def test_user_login(self):
         fake_user = FakeData.fake_user()
         db_user = User(
@@ -321,3 +357,33 @@ class TestUserRouter(InitialTestClient):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json().get("access_token"))
         self.assertEqual(response.json().get("token_type"), "bearer")
+
+    def test_user_login_with_invalid_username(self):
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_user))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/token",
+            data={"username": fake_user["username"] + "test", "password": fake_user["password"]},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_user_login_with_invalid_password(self):
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db.add(User(**fake_user))
+            db.commit()
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/token",
+            data={"username": fake_user["username"], "password": fake_user["password"] + "test"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        self.assertEqual(response.status_code, 401)
