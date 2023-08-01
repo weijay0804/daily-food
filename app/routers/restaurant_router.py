@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 15:58:18
 LastEditors: weijay
-LastEditTime: 2023-07-03 22:59:35
+LastEditTime: 2023-07-19 01:43:00
 Description: 餐廳路由
 '''
 
@@ -148,6 +148,8 @@ def delete_restaurant_open_time(open_time_id: int, db: Session = Depends(get_db)
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
 
+# TODO 這個要複製一份到 `../user_router.py` 中
+# 在 `../user_rotuer.py` 中的，只會推薦給使用者儲存的餐廳
 @router.get("/choice", response_model=restaurant_schema.OnReadsModel)
 def read_restaurant_randomly(
     lat: float = Query(default=..., description="所在位置的緯度值"),

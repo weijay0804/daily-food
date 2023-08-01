@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:27:16
+LastEditTime: 2023-08-01 17:20:41
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -84,6 +84,30 @@ def delete_restaurant_open_time(db: Session, open_time_id: int):
     return open_time
 
 
+def check_is_user_restaurant(db: Session, user_id: int, restaurant_id: int) -> bool:
+    """檢查傳入的 `restaurant_id` 是否屬於 `user_id`
+
+    Args:
+        db (Session): sessionmaker 實例
+
+        user_id (int): 使用者 ID 值
+
+        restaurant_id (int): 餐廳 ID 值
+
+    Returns:
+        bool: 如果是，回傳 `True` 反之，回傳 `False`
+    """
+
+    user = db.get(model.User, user_id)
+
+    restaurant_list = user.restaurants.all()
+
+    if restaurant_id not in set([r.id for r in restaurant_list]):
+        return False
+
+    return True
+
+
 def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     """取得餐廳資料
 
@@ -94,6 +118,22 @@ def get_restaurants(db: Session, skip: int = 0, limit: int = 100):
     """
 
     return db.query(model.Restaurant).offset(skip).limit(limit).all()
+
+
+def get_restaurants_with_user(db: Session, user_id: int):
+    """根據傳入的 `user_id` 取得對應的使用者收藏的餐廳列表"""
+
+    user = db.get(model.User, user_id)
+
+    return user.restaurants.all()
+
+
+def get_restaurant(db: Session, restaurant_id: int):
+    """取得單一餐廳詳細資料"""
+
+    restaurant = db.get(model.Restaurant, restaurant_id)
+
+    return restaurant
 
 
 def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel):
@@ -107,6 +147,38 @@ def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel
         phone=restaurant.phone,
     )
 
+    db.add(db_restaurant)
+    db.commit()
+    db.refresh(db_restaurant)
+
+    return db_restaurant
+
+
+def create_restaurant_with_user(
+    db: Session, restaurant: database_schema.RestaurantDBModel, user_id: int
+) -> "model.Restaurant":
+    """建立使用者的餐廳資料
+
+    Args:
+        db (Session): sessinmaker 實例
+        restaurant (database_schema.RestaurantDBModel): 餐廳資料
+        user_id (int): 使用者 ID 值
+
+    Returns:
+        model.Restaurant: 根據這個資料建立的資料庫餐廳模型實例
+    """
+
+    user = db.get(model.User, user_id)
+
+    db_restaurant = model.Restaurant(
+        name=restaurant.name,
+        address=restaurant.address,
+        lat=restaurant.lat,
+        lng=restaurant.lng,
+        phone=restaurant.phone,
+    )
+
+    user.restaurants.append(db_restaurant)
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)
@@ -151,6 +223,118 @@ def delete_restaurant(db: Session, restaurant_id: int):
     db.commit()
 
     return restaurant
+
+
+def get_user_restaurant_randomly(
+    db: Session, user_id: int, lat: float, lng: float, distance: float, limit: int
+) -> list:
+    """根據 `lat` 、 `lng` 和 `distance` 計算出符合距離內的使用者餐廳
+
+    Args:
+        db (Session): sessionmaker 實例
+        user_id (int): 使用者 ID 值
+        lat (float): 使用者所在位置的緯度值
+        lng (float): 使用者所在位置的精度值
+        distance (float): 要搜索多少距離範圍內的餐廳 (km)
+        limit (int): 最大回傳數量
+
+    Returns:
+        list: 符合條件的使用者餐廳
+    """
+
+    # 這邊使用原生 SQL 指令來查詢
+    # 使用 Haversine formula
+    sql_text = """
+    (
+        6371 * 2 * ASIN(
+            SQRT(
+                POWER(SIN((:lat - ABS(lat)) * PI() / 180 / 2), 2)
+                + COS(:lat * PI() / 180)
+                * COS(ABS(lat) * PI() / 180)
+                * POWER(SIN((:lng - lng) * PI() / 180 / 2), 2)
+            )
+        )
+    ) <= :distance
+    """
+
+    user = db.get(model.User, user_id)
+
+    if user is None:
+        return []
+
+    user_restaurant_query = user.restaurants
+
+    items = (
+        user_restaurant_query.filter(text(sql_text))
+        .params(lat=lat, lng=lng, distance=distance)
+        .limit(limit)
+        .all()
+    )
+
+    return items
+
+
+def get_user_restaurant_randomly_with_open_time(
+    db: Session,
+    user_id: int,
+    lat: float,
+    lng: float,
+    distance: float,
+    day_of_week: int,
+    current_time: str,
+    limit: int,
+) -> list:
+    """根據 `day_of_week` 和 `current_time` 篩選出符合的使用者餐廳
+
+    Args:
+        db (Session): sessionmake 實例
+        user_id (int): 使用者 ID 值
+        lat (float): 使用者所在位置的緯度值
+        lng (float): 使用者所在位置的精度值
+        distance (float): 要搜索多少距離範圍內的餐廳 (km)
+        day_of_week (int): 星期幾 (1~7)
+        current_time (str): 目前的時間 (HH:MM) 24H
+        limit (int): 最大回傳數量
+
+    Returns:
+        list: 符合條件的使用者餐廳
+    """
+
+    sql_text = """
+    (
+        6371 * 2 * ASIN(
+            SQRT(
+                POWER(SIN((:lat - ABS(lat)) * PI() / 180 / 2), 2)
+                + COS(:lat * PI() / 180)
+                * COS(ABS(lat) * PI() / 180)
+                * POWER(SIN((:lng - lng) * PI() / 180 / 2), 2)
+            )
+        )
+    ) <= :distance
+    AND :day_of_week = restaurant_open_time.day_of_week
+    AND TIME(:current_time) >= TIME(restaurant_open_time.open_time)
+    AND TIME(:current_time) <= TIME(restaurant_open_time.close_time)
+    """
+
+    user = db.get(model.User, user_id)
+
+    if user is None:
+        return []
+
+    user_restaurant_query = user.restaurants
+
+    items = (
+        user_restaurant_query.join(model.RestaurantOpenTime)
+        .filter(text(sql_text))
+        .params(
+            lat=lat, lng=lng, distance=distance, day_of_week=day_of_week, current_time=current_time
+        )
+        .order_by(func.random())
+        .limit(limit)
+        .all()
+    )
+
+    return items
 
 
 def get_restaurant_randomly(

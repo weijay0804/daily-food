@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 21:27:46
 LastEditors: weijay
-LastEditTime: 2023-07-06 23:23:03
+LastEditTime: 2023-07-11 18:45:39
 Description: 依賴項目
 '''
 
@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.database import SessionLocal, crud
 from app.error_handle import CustomError
-from app.schemas import user_schema, auth_schema
+from app.schemas import auth_schema
 from app.config.config import BaseConfig
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -48,4 +48,4 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     if user is None:
         CustomError.credentials_execption()
 
-    return user_schema.OnReadNoOAuthModel(username=user.username, email=user.email, id=user.id)
+    return user

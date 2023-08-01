@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-10 22:04:03
+LastEditTime: 2023-08-01 17:53:50
 Description: Api Router 單元測試
 '''
 
@@ -17,8 +17,8 @@ from app.config import config
 from app import create_app
 from app.database.model import Restaurant, RestaurantOpenTime, User
 from app.routers import register_router
-from tests.utils import FakeDataBase, FakeData
-from app.routers.depends import get_db
+from tests.utils import FakeDataBase, FakeData, FakeInitData
+from app.routers.depends import get_db, get_current_user
 
 
 ROOT_URL = "/api/v1"
@@ -277,7 +277,7 @@ class TestRestaurantOpenTimeRouter(InitialTestClient):
         self.assertEqual(response.status_code, 200)
 
 
-class TestUserRouter(InitialTestClient):
+class TestUserAuthRouter(InitialTestClient):
     def setUp(self) -> None:
         self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
 
@@ -387,3 +387,527 @@ class TestUserRouter(InitialTestClient):
         )
 
         self.assertEqual(response.status_code, 401)
+
+
+class TestUserRestaurantRouter(InitialTestClient):
+    """針對使用者的餐廳操作的單元測試
+
+    跟 :class:`TestResaurantRotuer` 不同的是，這個是針對 "登入" 的使用者進行的餐廳操作
+    """
+
+    def _get_db_user(self) -> "User":
+        """取得在資料庫中的使用者模型實例"""
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+        return user
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """在這個 class 開始進行測試前，先新增一個 user 資料到資料庫中"""
+
+        super().setUpClass()
+
+        fake_user = FakeInitData.fake_user()
+
+        db_user = User(**fake_user)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        cls.db_user_id = db_user.id
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+        self.test_app.dependency_overrides[get_current_user] = self._get_db_user
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
+            db.commit()
+
+    def test_read_user_restaurants_router(self):
+        """測試 讀取使用者收藏的餐廳列表
+
+        Ref: `app/routers/user_router/read_user_restaurants()`
+        """
+
+        # 先新增餐廳
+        fake_restaurant = FakeData.fake_restaurant()
+        db_restaurant = Restaurant(**fake_restaurant)
+
+        with self.fake_database.get_db() as db:
+            db_user = self._get_db_user()
+            db_user.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.commit()
+
+        response = self.client.get(f"{ROOT_URL}/user/restaurant")
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_user = db.get(User, self.db_user_id)
+
+            user_restaurant_set = set([r.id for r in db_user.restaurants.all()])
+
+        for r_data in response.json()["items"]:
+            self.assertIn(r_data["id"], user_restaurant_set)
+
+    def test_read_user_restaurant_router(self):
+        """測試 取得單一使用者餐廳資訊路由"""
+
+        fake_data = FakeData.fake_restaurant()
+        db_restaurant = Restaurant(**fake_data)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(db_restaurant)
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+        response = self.client.get(f"{ROOT_URL}/user/restaurant/{db_restaurant.id}")
+
+        self.assertEqual(response.status_code, 200)
+
+    # 使用 測試方法層面 mock 直接替換掉 get_coords()
+    @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))
+    def test_create_user_restaurant_router(self, mock_get_coords):
+        """測試 建立使用者餐廳資料路由
+
+        Ref: `app/routers/user_router/create_user_restaurant()`
+        """
+
+        fake_restaurant = FakeData.fake_restaurant()
+
+        with self.fake_database.get_db() as db:
+            db_restaurants = db.get(User, self.db_user_id).restaurants.all()
+
+            self.assertEqual(len(db_restaurants), 0)
+
+        response = self.client.post(f"{ROOT_URL}/user/restaurant", json=fake_restaurant)
+
+        self.assertEqual(response.status_code, 201)
+
+        with self.fake_database.get_db() as db:
+            db_restaurants = db.get(User, self.db_user_id).restaurants.all()
+
+            self.assertEqual(len(db_restaurants), 1)
+
+    def test_update_user_restaurant_router(self):
+        """測試 更新使用者餐廳路由
+
+        Ref: `app/routers/user_router/update_user_restaurant()`
+        """
+
+        def _inner_get_user(user_id):
+            def wrap():
+                with self.fake_database.get_db() as db:
+                    user = db.get(User, user_id)
+                return user
+
+            return wrap
+
+        fake_restaurant = FakeData.fake_restaurant()
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = Restaurant(**fake_restaurant)
+            db_user2 = User(**fake_user)
+
+            db_user1 = db.get(User, self.db_user_id)
+
+            db_user1.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.add(db_user2)
+            db.commit()
+
+            db.refresh(db_restaurant)
+            db.refresh(db_user1)
+
+            restaurant = db_user1.restaurants.all()[0]
+
+            db_user2_id = db_user2.id
+
+            self.assertEqual(restaurant.name, fake_restaurant["name"])
+
+        # 測試正確的使用者
+        response = self.client.patch(
+            f"{ROOT_URL}/user/restaurant/{db_restaurant.id}", json={"name": "update"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_user1 = db.get(User, self.db_user_id)
+
+            self.assertEqual(db_user1.restaurants.all()[0].name, "update")
+
+        # 測試錯誤的使用者
+        self.test_app.dependency_overrides[get_current_user] = _inner_get_user(db_user2_id)
+
+        # 測試正確的使用者
+        response = self.client.patch(
+            f"{ROOT_URL}/user/restaurant/{db_restaurant.id}", json={"name": "update"}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_user_restaurant_router(self):
+        """測試 刪除使用者餐廳路由
+
+        Ref: `app/routers/user_router/delete_user_restaurant()`
+        """
+
+        def _inner_get_user(user_id):
+            def wrap():
+                with self.fake_database.get_db() as db:
+                    user = db.get(User, user_id)
+
+                return user
+
+            return wrap
+
+        fake_restaurant = FakeData.fake_restaurant()
+        fake_user = FakeData.fake_user()
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = Restaurant(**fake_restaurant)
+
+            # HACK 這邊要修改，不要這樣寫
+            # 因為沒有清空 user table 所以可能會造成 `UNIQUE constraint failed`
+            db_user2 = User(
+                username=fake_user["username"] + "test",
+                email=fake_user["email"] + "test",
+                password=fake_user["password"],
+            )
+
+            db_user1 = db.get(User, self.db_user_id)
+
+            db_user1.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.add(db_user2)
+            db.commit()
+
+            db.refresh(db_restaurant)
+            db.refresh(db_user2)
+
+            restaurant = db_user1.restaurants.all()
+
+            self.assertEqual(len(restaurant), 1)
+
+        # 正確的使用者
+        response = self.client.delete(f"{ROOT_URL}/user/restaurant/{db_restaurant.id}")
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_user1 = db.get(User, self.db_user_id)
+            restaurants = db_user1.restaurants.all()
+
+            self.assertEqual(len(restaurants), 0)
+
+        self.test_app.dependency_overrides[get_current_user] = _inner_get_user(db_user2.id)
+
+        # 錯誤的使用者
+        response = self.client.delete(f"{ROOT_URL}/user/restaurant/100")
+
+        self.assertEqual(response.status_code, 403)
+
+
+class TestUserRestaurantOpenTimeRouter(InitialTestClient):
+    """針對使用者的餐廳營業時間操作的單元測試"""
+
+    def _get_db_user(self, user_id):
+        def wrap():
+            with self.fake_database.get_db() as db:
+                user = db.get(User, user_id)
+
+            return user
+
+        return wrap
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """在這個 class 開始測試之前，先新增兩個 user 和餐廳資料到資料庫"""
+
+        super().setUpClass()
+
+        fake_user1 = FakeInitData.fake_user()
+        fake_user2 = FakeInitData.fake_user()
+
+        fake_restaurant = FakeInitData.fake_restaurant()
+
+        db_user1 = User(**fake_user1)
+        db_user2 = User(
+            username=fake_user2["username"] + "test2",
+            email=fake_user2["email"] + "test2",
+            password=fake_user2["password"] + "test2",
+        )
+
+        db_restaurant = Restaurant(**fake_restaurant)
+
+        with cls.fake_database.get_db() as db:
+            db.add_all([db_user1, db_user2])
+            db.commit()
+            db.refresh(db_user1)
+            db.refresh(db_user2)
+
+            db_user1.restaurants.append(db_restaurant)
+
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+            cls.db_user1_id = db_user1.id
+            cls.db_user2_id = db_user2.id
+            cls.db_restaurant_id = db_restaurant.id
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+        self.test_app.dependency_overrides[get_current_user] = self._get_db_user(self.db_user1_id)
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant_open_time"))
+            db.commit()
+
+    def test_create_user_restaurant_open_time_router(self):
+        """測試 建立使用者餐廳營業時間路由
+
+        Ref: `app/routers/user_router/create_user_restaurant_open_time()`
+        """
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            open_times = db_restaurant.open_times
+
+            self.assertEqual(len(open_times), 0)
+
+        open_time_items = FakeData.fake_restaurant_open_time(to_str=True, number=2)
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/restaurant/{self.db_restaurant_id}/open_time",
+            json={"items": open_time_items},
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            open_times = db_restaurant.open_times
+
+            self.assertEqual(len(open_times), 2)
+
+    def test_create_user_restaurant_open_time_router_with_invalid_user(self):
+        """測試 使用無效的使用者建立餐廳營業時間"""
+
+        self.test_app.dependency_overrides[get_current_user] = self._get_db_user(self.db_user2_id)
+
+        open_time_items = FakeData.fake_restaurant_open_time(to_str=True, number=2)
+
+        response = self.client.post(
+            f"{ROOT_URL}/user/restaurant/{self.db_restaurant_id}/open_time",
+            json={"items": open_time_items},
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            open_times = db_restaurant.open_times
+
+            self.assertEqual(len(open_times), 0)
+
+    def test_update_user_restaurant_open_time_router(self):
+        """測試 更新使用者餐廳營業時間路由"""
+
+        fake_open_time = FakeData.fake_restaurant_open_time()
+        open_time_id = None
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            db_open_time = RestaurantOpenTime(**fake_open_time)
+
+            db_restaurant.open_times.append(db_open_time)
+
+            db.add(db_open_time)
+            db.commit()
+            db.refresh(db_open_time)
+
+            open_time_id = db_open_time.id
+
+        response = self.client.patch(
+            f"{ROOT_URL}/user/restaurant/{self.db_restaurant_id}/open_time/{open_time_id}",
+            json={"day_of_week": 10},
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_open_time = db.get(RestaurantOpenTime, open_time_id)
+
+            self.assertEqual(db_open_time.day_of_week, 10)
+            self.assertEqual(db_open_time.open_time, fake_open_time["open_time"])
+            self.assertEqual(db_open_time.close_time, fake_open_time["close_time"])
+
+    def test_delete_user_restaurant_open_time_router(self):
+        """測試 刪除使用者餐廳營業時間路由"""
+
+        fake_open_time = FakeData.fake_restaurant_open_time()
+        db_open_time_id = None
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            db_open_time = RestaurantOpenTime(**fake_open_time)
+            db_restaurant.open_times.append(db_open_time)
+
+            db.add(db_open_time)
+            db.commit()
+            db.refresh(db_open_time)
+
+            db_open_time_id = db_open_time.id
+
+            self.assertEqual(len(db_restaurant.open_times), 1)
+
+        response = self.client.delete(
+            f"{ROOT_URL}/user/restaurant/{self.db_restaurant_id}/open_time/{db_open_time_id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.fake_database.get_db() as db:
+            db_restaurant = db.get(Restaurant, self.db_restaurant_id)
+
+            self.assertEqual(len(db_restaurant.open_times), 0)
+
+
+class TestChoiceUserRestaurantRouter(InitialTestClient):
+    """隨機選擇使用者餐廳路由測試"""
+
+    def _get_db_user(self) -> "User":
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+        return user
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        fake_user = FakeInitData.fake_user()
+
+        db_user = User(**fake_user)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        cls.db_user_id = db_user.id
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+        self.test_app.dependency_overrides[get_current_user] = self._get_db_user
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
+            db.commit()
+
+    def test_get_user_restaurant_randomly_router(self):
+        inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
+        outer_fake_data = FakeData.fake_restaurant_far()
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            db_inner_restaurant1 = Restaurant(**inner_fake_data1)
+            db_inner_restaurant2 = Restaurant(**inner_fake_data2)
+            db_outer_restaurant = Restaurant(**outer_fake_data)
+
+            user.restaurants.append(db_inner_restaurant1)
+            user.restaurants.append(db_inner_restaurant2)
+            user.restaurants.append(db_outer_restaurant)
+
+            db.add_all([db_inner_restaurant1, db_inner_restaurant2, db_outer_restaurant])
+
+            db.commit()
+
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            response.json()["items"][0]["name"]
+            in (inner_fake_data1["name"], inner_fake_data2["name"])
+        )
+        self.assertEqual(len(response.json()["items"]), 1)
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&limit=10"
+        )
+
+        self.assertEqual(len(response.json()["items"]), 2)
+
+    def test_get_user_restaurant_randomly_router_with_open_time(self):
+        fake_data1, fake_data2 = FakeData.fake_restaurant(number=2)
+        fake_open_time1, fake_open_time2 = FakeData.fake_restaurant_open_time(number=2)
+
+        restaurant1 = Restaurant(**fake_data1)
+        restaurant2 = Restaurant(**fake_data2)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(restaurant1)
+            user.restaurants.append(restaurant2)
+
+            db.add_all([restaurant1, restaurant2])
+
+            db.commit()
+            db.refresh(restaurant1)
+            db.refresh(restaurant2)
+
+            open_time1 = RestaurantOpenTime(**fake_open_time1)
+            open_time2 = RestaurantOpenTime(**fake_open_time2)
+
+            restaurant1.open_times.append(open_time1)
+            restaurant2.open_times.append(open_time2)
+
+            db.add_all([open_time1, open_time2])
+            db.commit()
+
+            db.refresh(open_time1)
+
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
+        day_of_week = open_time1.day_of_week
+        current_time = open_time1.open_time.strftime("%H:%M")
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["items"]), 1)
+        self.assertEqual(response.json()["items"][0]["name"], fake_data1["name"])
