@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-07-14 18:30:16
+LastEditTime: 2023-08-01 15:47:17
 Description: DataBase CRUD 單元測試
 '''
 
@@ -309,6 +309,104 @@ class TestChoiceRestaurantCURD(BaseDataBaseTestCase):
             self.assertEqual(
                 random_restaurant[0].open_times[0].close_time, open_time1["close_time"]
             )
+
+
+class TestChoiceUserRestaurantCURD(BaseDataBaseTestCase):
+    """測試隨機選擇使用者餐廳 CURD 功能"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        fake_user = FakeInitData.fake_user()
+
+        db_user = User(**fake_user)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        cls.db_user_id = db_user.id
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
+            db.commit()
+
+    def test_get_user_restaurant_randomly_function(self):
+        fake_inner_data = FakeData.fake_restaurant()
+        fake_outer_data = FakeData.fake_restaurant_far()
+
+        inner_restaurant = Restaurant(**fake_inner_data)
+        outer_restaurant = Restaurant(**fake_outer_data)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(inner_restaurant)
+            user.restaurants.append(outer_restaurant)
+
+            db.add_all([inner_restaurant, outer_restaurant])
+            db.commit()
+
+            inner_lat, inner_lng = FakeData.fake_current_location()
+
+            restaurants = crud.get_user_restaurant_randomly(
+                db, self.db_user_id, inner_lat, inner_lng, 5.0, 1
+            )
+
+            self.assertIsNotNone(restaurants)
+            self.assertEqual(len(restaurants), 1)
+            self.assertEqual(restaurants[0].name, inner_restaurant.name)
+
+    def test_get_user_restaurant_randomly_with_open_time_function(self):
+        fake_inner_data1, fake_inner_data2 = FakeData.fake_restaurant(number=2)
+
+        inner_restaurant1 = Restaurant(**fake_inner_data1)
+        inner_restaurant2 = Restaurant(**fake_inner_data2)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(inner_restaurant1)
+            user.restaurants.append(inner_restaurant2)
+
+            db.add_all([inner_restaurant1, inner_restaurant2])
+            db.commit()
+            db.refresh(inner_restaurant1)
+            db.refresh(inner_restaurant2)
+
+        open_time1, open_time2 = FakeData.fake_restaurant_open_time(number=2)
+
+        with self.fake_database.get_db() as db:
+            db_open_time1 = RestaurantOpenTime(**open_time1)
+            db_open_time2 = RestaurantOpenTime(**open_time2)
+
+            inner_restaurant1.open_times.append(db_open_time1)
+            inner_restaurant2.open_times.append(db_open_time2)
+
+            db.add_all([db_open_time1, db_open_time2])
+            db.commit()
+
+        with self.fake_database.get_db() as db:
+            lat, lng = FakeData.fake_current_location()
+
+            items = crud.get_user_restaurant_randomly_with_open_time(
+                db,
+                self.db_user_id,
+                lat,
+                lng,
+                5.0,
+                open_time1["day_of_week"],
+                open_time1["open_time"].strftime("%H:%M"),
+                1,
+            )
+
+            self.assertIsNotNone(items)
+            self.assertEqual(len(items), 1)
+            self.assertEqual(items[0].name, fake_inner_data1["name"])
 
 
 class TestRestaurantOpenTimeCRUD(BaseDataBaseTestCase):
