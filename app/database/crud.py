@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-24 22:13:53
 LastEditors: weijay
-LastEditTime: 2023-07-31 23:43:06
+LastEditTime: 2023-08-01 17:20:41
 Description: 對資料庫進行 CRUD 操作
 '''
 
@@ -126,6 +126,14 @@ def get_restaurants_with_user(db: Session, user_id: int):
     user = db.get(model.User, user_id)
 
     return user.restaurants.all()
+
+
+def get_restaurant(db: Session, restaurant_id: int):
+    """取得單一餐廳詳細資料"""
+
+    restaurant = db.get(model.Restaurant, restaurant_id)
+
+    return restaurant
 
 
 def create_restaurant(db: Session, restaurant: database_schema.RestaurantDBModel):
