@@ -2,13 +2,14 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-19 01:36:52
+LastEditTime: 2023-08-01 17:35:45
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
+from typing import Optional
 from datetime import timedelta, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -218,3 +219,24 @@ def delete_user_restaurant_open_time(
         ErrorHandler.raise_404(f"The open time ID: {open_time_id} is not founed in database.")
 
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
+
+
+@router.get("/restaurant_choice")
+def get_randomly_restaurant(
+    lat: float = Query(default=..., description="所在位置的緯度值"),
+    lng: float = Query(default=..., description="所在位置的精度值"),
+    distance: float = Query(default=..., description="要查詢多少距離範圍內 (km)"),
+    limit: Optional[int] = Query(default=1, ge=1, le=10, description="一次查詢回傳的最大餐廳數量"),
+    day_of_week: Optional[str] = Query(default=None, description="星期幾"),
+    current_time: Optional[str] = Query(default=None, description="目前時間 (HH:MM) 24H"),
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
+):
+    if day_of_week and current_time:
+        items = crud.get_user_restaurant_randomly_with_open_time(
+            db, user.id, lat, lng, distance, day_of_week, current_time, limit
+        )
+    else:
+        items = crud.get_user_restaurant_randomly(db, user.id, lat, lng, distance, limit)
+
+    return restaurant_schema.OnReadsModel(items=items)

@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-07-19 00:41:18
+LastEditTime: 2023-08-01 17:34:48
 Description: Api Router 單元測試
 '''
 
@@ -776,3 +776,120 @@ class TestUserRestaurantOpenTimeRouter(InitialTestClient):
             db_restaurant = db.get(Restaurant, self.db_restaurant_id)
 
             self.assertEqual(len(db_restaurant.open_times), 0)
+
+
+class TestChoiceUserRestaurantRouter(InitialTestClient):
+    """隨機選擇使用者餐廳路由測試"""
+
+    def _get_db_user(self) -> "User":
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+        return user
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        fake_user = FakeInitData.fake_user()
+
+        db_user = User(**fake_user)
+
+        with cls.fake_database.get_db() as db:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        cls.db_user_id = db_user.id
+
+    def setUp(self) -> None:
+        self.test_app.dependency_overrides[get_db] = self.fake_database.override_get_db
+        self.test_app.dependency_overrides[get_current_user] = self._get_db_user
+
+    def tearDown(self) -> None:
+        with self.fake_database.get_db() as db:
+            db.execute(text("DELETE FROM restaurant"))
+            db.execute(text("DELETE FROM user_restaurant_intermediary"))
+            db.commit()
+
+    def test_get_user_restaurant_randomly_router(self):
+        inner_fake_data1, inner_fake_data2 = FakeData.fake_restaurant(number=2)
+        outer_fake_data = FakeData.fake_restaurant_far()
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            db_inner_restaurant1 = Restaurant(**inner_fake_data1)
+            db_inner_restaurant2 = Restaurant(**inner_fake_data2)
+            db_outer_restaurant = Restaurant(**outer_fake_data)
+
+            user.restaurants.append(db_inner_restaurant1)
+            user.restaurants.append(db_inner_restaurant2)
+            user.restaurants.append(db_outer_restaurant)
+
+            db.add_all([db_inner_restaurant1, db_inner_restaurant2, db_outer_restaurant])
+
+            db.commit()
+
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            response.json()["items"][0]["name"]
+            in (inner_fake_data1["name"], inner_fake_data2["name"])
+        )
+        self.assertEqual(len(response.json()["items"]), 1)
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&limit=10"
+        )
+
+        self.assertEqual(len(response.json()["items"]), 2)
+
+    def test_get_user_restaurant_randomly_router_with_open_time(self):
+        fake_data1, fake_data2 = FakeData.fake_restaurant(number=2)
+        fake_open_time1, fake_open_time2 = FakeData.fake_restaurant_open_time(number=2)
+
+        restaurant1 = Restaurant(**fake_data1)
+        restaurant2 = Restaurant(**fake_data2)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(restaurant1)
+            user.restaurants.append(restaurant2)
+
+            db.add_all([restaurant1, restaurant2])
+
+            db.commit()
+            db.refresh(restaurant1)
+            db.refresh(restaurant2)
+
+            open_time1 = RestaurantOpenTime(**fake_open_time1)
+            open_time2 = RestaurantOpenTime(**fake_open_time2)
+
+            restaurant1.open_times.append(open_time1)
+            restaurant2.open_times.append(open_time2)
+
+            db.add_all([open_time1, open_time2])
+            db.commit()
+
+            db.refresh(open_time1)
+
+        lat, lng = FakeData.fake_current_location()
+        distance = 5.0
+        day_of_week = open_time1.day_of_week
+        current_time = open_time1.open_time.strftime("%H:%M")
+
+        response = self.client.get(
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["items"]), 1)
+        self.assertEqual(response.json()["items"][0]["name"], fake_data1["name"])
