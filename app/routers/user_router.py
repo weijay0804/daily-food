@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-08-01 17:35:45
+LastEditTime: 2023-08-01 17:45:09
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -69,6 +69,26 @@ def read_user_restaurants(
     items = crud.get_restaurants_with_user(db, user.id)
 
     return restaurant_schema.OnReadsModel(items=items)
+
+
+@router.get("/restaurant/{restaurant_id}", response_model=restaurant_schema.OnReadModel)
+def read_user_restaurant(
+    restaurant_id: int, db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
+):
+    """取得單一使用者餐廳資訊"""
+
+    if not crud.check_is_user_restaurant(db, user.id, restaurant_id):
+        raise HTTPException(403)
+
+    restaurant = crud.get_restaurant(db, restaurant_id)
+
+    return restaurant_schema.OnReadModel(
+        **restaurant.to_dict(),
+        open_times=[
+            restaurant_schema._OpenTimeInDBModel(**open_time.to_dict())
+            for open_time in restaurant.open_times
+        ],
+    )
 
 
 @router.post("/restaurant", status_code=201)
