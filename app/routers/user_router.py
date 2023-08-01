@@ -2,7 +2,7 @@
 Author: andy
 Date: 2023-06-20 02:30:07
 LastEditors: weijay
-LastEditTime: 2023-07-31 23:44:04
+LastEditTime: 2023-08-01 17:35:45
 Description: 使用者路由，這些 api 需要通過認證後才能存取
 '''
 
@@ -221,7 +221,7 @@ def delete_user_restaurant_open_time(
     return {"message": f"Open time ID: {open_time_id} has been deleted."}
 
 
-@router.get("/restaurant/choice")
+@router.get("/restaurant_choice")
 def get_randomly_restaurant(
     lat: float = Query(default=..., description="所在位置的緯度值"),
     lng: float = Query(default=..., description="所在位置的精度值"),

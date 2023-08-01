@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-08-01 16:23:04
+LastEditTime: 2023-08-01 17:34:48
 Description: Api Router 單元測試
 '''
 
@@ -835,7 +835,7 @@ class TestChoiceUserRestaurantRouter(InitialTestClient):
         distance = 5.0
 
         response = self.client.get(
-            f"{ROOT_URL}/user/restaurant/choice?lat={lat}&lng={lng}&distance={distance}"
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -846,7 +846,7 @@ class TestChoiceUserRestaurantRouter(InitialTestClient):
         self.assertEqual(len(response.json()["items"]), 1)
 
         response = self.client.get(
-            f"{ROOT_URL}/user/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&limit=10"
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&limit=10"
         )
 
         self.assertEqual(len(response.json()["items"]), 2)
@@ -887,7 +887,7 @@ class TestChoiceUserRestaurantRouter(InitialTestClient):
         current_time = open_time1.open_time.strftime("%H:%M")
 
         response = self.client.get(
-            f"{ROOT_URL}/user/restaurant/choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
+            f"{ROOT_URL}/user/restaurant_choice?lat={lat}&lng={lng}&distance={distance}&day_of_week={day_of_week}&current_time={current_time}&limit=2"
         )
 
         self.assertEqual(response.status_code, 200)
