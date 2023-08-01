@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-05-15 22:05:37
 LastEditors: weijay
-LastEditTime: 2023-08-01 15:47:17
+LastEditTime: 2023-08-01 17:47:30
 Description: DataBase CRUD 單元測試
 '''
 
@@ -49,6 +49,21 @@ class TestRestaurantCURD(BaseDataBaseTestCase):
 
         self.assertTrue(isinstance(restaurants, list))
         self.assertEqual(restaurants[0].name, fake_restaurant.name)
+
+    def test_get_restaurant_function(self):
+        fake_data = FakeData.fake_restaurant()
+
+        db_restaurant = Restaurant(**fake_data)
+
+        with self.fake_database.get_db() as db:
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+            restaurant = crud.get_restaurant(db, db_restaurant.id)
+
+            self.assertIsNotNone(restaurant)
+            self.assertEqual(restaurant.name, db_restaurant.name)
 
     def test_create_restaurant_function(self):
         fake_data = FakeData.fake_restaurant()

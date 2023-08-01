@@ -2,7 +2,7 @@
 Author: weijay
 Date: 2023-04-25 16:26:37
 LastEditors: weijay
-LastEditTime: 2023-08-01 17:34:48
+LastEditTime: 2023-08-01 17:53:50
 Description: Api Router 單元測試
 '''
 
@@ -458,6 +458,24 @@ class TestUserRestaurantRouter(InitialTestClient):
 
         for r_data in response.json()["items"]:
             self.assertIn(r_data["id"], user_restaurant_set)
+
+    def test_read_user_restaurant_router(self):
+        """測試 取得單一使用者餐廳資訊路由"""
+
+        fake_data = FakeData.fake_restaurant()
+        db_restaurant = Restaurant(**fake_data)
+
+        with self.fake_database.get_db() as db:
+            user = db.get(User, self.db_user_id)
+
+            user.restaurants.append(db_restaurant)
+            db.add(db_restaurant)
+            db.commit()
+            db.refresh(db_restaurant)
+
+        response = self.client.get(f"{ROOT_URL}/user/restaurant/{db_restaurant.id}")
+
+        self.assertEqual(response.status_code, 200)
 
     # 使用 測試方法層面 mock 直接替換掉 get_coords()
     @mock.patch("app.utils.MapApi.get_coords", return_value=(25.0, 121.0))

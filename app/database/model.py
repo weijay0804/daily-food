@@ -1,8 +1,8 @@
 '''
 Author: weijay
 Date: 2023-04-24 20:34:28
-LastEditors: andy
-LastEditTime: 2023-06-20 02:26:36
+LastEditors: weijay
+LastEditTime: 2023-08-01 17:41:53
 Description: 定義  DataBase ORM 模型
 '''
 
@@ -110,6 +110,18 @@ class Restaurant(Base):
     def __repr__(self):
         return f"Data in restaurant table, name = {self.name}"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "lat": self.lat,
+            "lng": self.lng,
+            "phone": self.phone,
+            "desc": self.desc,
+            "price": self.price,
+        }
+
 
 class RestaurantOpenTime(Base):
     """餐廳營業時間表"""
@@ -143,8 +155,8 @@ class RestaurantOpenTime(Base):
         return {
             "id": self.id,
             "day_of_week": self.day_of_week,
-            "open_time": self.open_time,
-            "close_time": self.close_time,
+            "open_time": self.open_time.strftime("%H:%M"),
+            "close_time": self.close_time.strftime("%H:%M"),
         }
 
 
